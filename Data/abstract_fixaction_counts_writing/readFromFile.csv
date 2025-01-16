@@ -1,0 +1,7 @@
+pid,function declaration,exception handling,variable declaration,externally defined variable or function,assignment,variable,function call,parameter
+168,0,0,2,1,0,2,9,0
+311,2,3,37,9,0,5,0,0
+314,7,0,119,12,2,5,8,6
+191,10,0,56,19,0,9,4,5
+189,0,0,24,26,7,2,25,4
+312,0,0,8,10,2,2,14,2

@@ -1,0 +1,5 @@
+pid,function declaration,parameter,variable declaration,loop,conditional statement,variable,function call,argument,externally defined variable or function
+319,0,5,3,17,1,0,2,5,0
+315,28,27,70,17,7,1,15,36,57
+133,11,4,59,9,19,2,0,1,5
+191,43,15,64,80,46,7,11,14,75

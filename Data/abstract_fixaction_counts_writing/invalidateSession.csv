@@ -1,0 +1,5 @@
+pid,function declaration,parameter,externally defined variable or function,function call,operation,argument,variable declaration
+136,9,1,17,10,2,4,0
+176,33,14,24,21,0,6,0
+182,57,0,27,22,0,4,4
+139,27,15,94,69,0,66,7

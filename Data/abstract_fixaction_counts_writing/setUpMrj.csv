@@ -1,0 +1,7 @@
+pid,function declaration,external class,externally defined variable or function,assignment,function call,argument,conditional statement,return,exception handling,parameter
+182,0,0,0,0,0,0,0,0,0,0
+111,17,13,3,1,11,6,0,0,0,1
+143,15,22,13,0,13,0,8,2,1,0
+316,63,18,22,0,0,0,12,0,0,0
+312,21,3,32,0,2,4,10,2,0,0
+139,30,24,9,1,8,9,29,4,0,1
