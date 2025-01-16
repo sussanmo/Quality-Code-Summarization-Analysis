@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "abstract_fixation_count_writing",
+			"path": "../abstract_fixation_count_writing"
+		},
+		{
+			"name": "midprep",
+			"path": "."
+		},
+		{
+			"path": "../abstract_fixation_duration_writing"
+		}
+	],
+	"settings": {}
+}
