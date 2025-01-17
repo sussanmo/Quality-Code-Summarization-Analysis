@@ -1,0 +1,4 @@
+pid,private.0,int.0,handleHalt.0,//need to test that this is the root process.200,if.0,processID.1,==.0,0.0,Machine.0,halt.0,else.0,"//System err println ""non-root process trying to call halt"" );.201",return.0,1.0,//This is not the root process so ignore this one.202,Lib.0,assertNotReached.0,"""Machine halt did not halt machine!"".100",return.1,0.1,code,participant_summary
+166,2,0,1,0,2,3,0,0,5,2,5,0,2,0,0,2,6,0,4,0,18,14
+310,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6
+189,0,0,0,0,0,6,2,3,3,5,0,0,0,3,0,0,1,4,1,0,27,6

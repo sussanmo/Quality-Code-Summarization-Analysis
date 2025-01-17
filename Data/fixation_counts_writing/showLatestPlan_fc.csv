@@ -1,0 +1,6 @@
+pid,public.0,String.0,showLatestPlan.0,// clear previous protocols.200,mCurrPlanProt.0,=.0,nan.0,try.0,PatientController.0,han.0,=.1,new.0,PatientController.1,mCurrPatient.0,NutPlan.0,plan.0,=.2,han.1,getLatestNutritionPlan.0,NutritionController.0,controller.0,=.3,NutritionController.1,editPlan.0,plan.1,mCurrPlanProt.1,=.4,WebPlanProtocol.0,createPlan.0,controller.1,plan.2,mCurrPatient.1,return.0,"""success"".0",catch.0,Exception.0,e.0,e.1,printStackTrace.0,return.1,"""failure"".0",code,participant_summary
+166,0,1,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0,0,3,3,0,0,8,0,0,8,0,0,0,2,0,0,0,1,1,7,0,0,9,0,0,25,6
+319,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0
+111,3,7,11,0,2,0,0,4,14,2,0,0,8,3,5,0,0,0,4,1,0,0,8,7,0,0,0,0,1,0,2,0,0,0,1,0,0,0,0,3,0,26,13
+143,0,1,23,4,36,0,5,2,26,2,1,0,13,0,7,5,0,4,14,4,4,0,2,1,0,9,0,1,0,0,0,0,6,1,0,1,0,0,5,4,0,71,19
+316,0,3,45,2,6,0,1,0,6,1,1,0,8,3,1,3,0,0,1,3,0,0,2,0,0,6,0,0,0,0,0,0,0,2,0,4,0,0,6,0,1,65,8

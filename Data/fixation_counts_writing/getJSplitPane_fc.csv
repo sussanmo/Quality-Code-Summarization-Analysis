@@ -1,0 +1,4 @@
+pid,private.0,JSplitPane.0,getJSplitPane.0,if.0,jSplitPane.0,==.0,nan.0,jSplitPane.1,=.0,new.0,JSplitPane.1,DevicesTreePanel.0,p.0,=.1,new.1,DevicesTreePanel.1,p.1,addSelectionChangeListener.0,this.0,jSplitPane.2,setLeftComponent.0,p.2,jSplitPane.3,setRightComponent.0,getJTabbedPane.0,jSplitPane.4,setDividerSize.0,5.0,jSplitPane.5,setDividerLocation.0,200.0,return.0,jSplitPane.6,code,participant_summary
+136,0,3,2,0,5,0,3,8,0,1,0,1,0,0,0,0,0,12,1,1,3,1,1,8,0,0,2,0,2,2,0,0,0,19,0
+314,0,8,2,0,1,0,0,6,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,3,2,0,6,0,0,0,0,11,4
+189,0,3,17,0,12,0,22,4,0,0,6,4,0,0,0,0,0,8,1,2,2,2,0,2,0,0,0,0,0,2,0,0,1,15,18

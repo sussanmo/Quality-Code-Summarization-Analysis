@@ -1,0 +1,5 @@
+pid,protected.0,void.0,onAttach.0,if.0,attached.0,return;.0,attached.1,=.0,TRUE.0,// Set the main element's event listener. This should only be set.200,// while the widget is attached because it creates a circular.201,// reference between JavaScript and the DOM..202,DOM.0,setEventListener.0,getElement.0,this.0,"// Now that the widget is attached, call onLoad()..203",onLoad.0,code,participant_summary
+155,0,0,0,2,26,9,4,0,0,0,3,2,3,9,20,3,1,21,72,5
+117,15,1,0,0,2,2,3,0,0,0,0,0,0,1,7,0,0,0,47,34
+310,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,2,4,1
+147,5,14,3,0,14,9,6,3,1,0,0,0,4,24,9,0,0,0,70,36

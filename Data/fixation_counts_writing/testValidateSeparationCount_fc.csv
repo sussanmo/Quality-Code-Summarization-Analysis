@@ -1,0 +1,4 @@
+pid,public.0,void.0,testValidateSeparationCount.0,try.0,LinearDimension.0,validateSeparationCount.0,0.0,fail.0,catch.0,IllegalArgumentException.0,ex.0,// ok.200,try.1,LinearDimension.1,validateSeparationCount.1,-.0,2.0,fail.1,catch.1,IllegalArgumentException.1,ex.1,// ok.201,LinearDimension.2,validateSeparationCount.2,1.0,LinearDimension.3,validateSeparationCount.3,2988.0,code,participant_summary
+136,0,1,5,0,3,16,0,7,1,5,1,0,0,2,1,0,0,0,3,0,0,0,7,12,0,4,4,1,23,11
+186,0,0,1,0,0,10,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,5,55
+318,0,0,4,0,2,1,0,0,0,0,0,0,0,1,0,0,0,2,0,0,0,1,0,0,0,0,0,0,47,20

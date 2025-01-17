@@ -1,0 +1,8 @@
+pid,public.0,void.0,testSetWelcomeMsg.0,System.0,out.0,println.0,"""setWelcomeMsg"".0",String.0,welcomeMsg.0,=.0,""""".0",SystemClient_DBImpl.0,instance.0,=.1,new.0,SystemClient_DBImpl.1,instance.1,setWelcomeMsg.0,welcomeMsg.1,// TODO review the generated test code and remove the default call to fail..200,fail.0,"""The test case is a prototype. "".100",code,participant_summary
+155,0,0,1,1,2,14,4,5,10,0,0,20,2,0,0,1,15,28,6,0,0,0,59,50
+166,1,0,0,0,1,0,0,0,4,0,0,8,0,0,0,0,2,4,3,0,1,0,27,11
+168,0,0,11,0,1,6,6,0,2,0,1,7,2,0,1,0,0,6,3,0,0,0,34,10
+311,0,1,14,7,3,2,5,6,2,2,2,22,3,0,2,5,6,7,3,0,9,0,39,43
+318,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,7
+147,0,1,32,0,3,11,15,4,20,0,0,18,3,0,0,4,11,17,2,0,3,0,47,45
+312,0,0,14,0,0,3,6,0,12,0,2,21,9,0,0,6,0,7,6,0,0,0,24,0

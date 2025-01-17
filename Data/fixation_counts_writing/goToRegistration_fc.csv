@@ -1,0 +1,6 @@
+pid,private.0,void.0,goToRegistration.0,m_logo.0,setVisible.0,FALSE.0,m_login.0,setText.0,"""Cancel"".0",m_userLabel.0,setLocation.0,16.0,4.0,m_username.0,setLocation.1,16.1,24.0,m_passLabel.0,setLocation.2,16.2,52.0,m_password.0,setLocation.3,16.3,70.0,m_confirmPass.0,setVisible.1,TRUE.0,m_confPassLabel.0,setVisible.2,TRUE.1,m_male.0,setVisible.3,TRUE.2,m_female.0,setVisible.4,TRUE.3,this.0,setTitle.0,"""Registration"".0",code,participant_summary
+136,0,0,0,4,8,1,5,21,4,7,12,0,0,6,1,0,0,5,0,1,0,0,0,0,0,5,1,0,10,3,0,0,1,0,3,0,0,0,13,0,38,0
+319,0,0,0,0,0,0,0,0,0,0,3,0,0,2,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,5,2
+182,0,2,5,2,4,2,11,3,1,4,0,0,0,2,0,0,0,0,3,0,0,4,0,0,0,1,2,0,7,0,0,0,2,0,6,3,0,0,0,0,21,28
+111,3,7,12,23,8,0,25,10,6,8,6,0,0,5,6,1,0,6,2,0,0,2,3,0,0,3,0,0,8,4,0,6,5,2,8,3,0,7,3,1,54,10
+106,0,0,8,1,18,14,2,20,4,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,1,2,0,2,0,0,0,4,0,5,3,0,0,0,0,15,40
