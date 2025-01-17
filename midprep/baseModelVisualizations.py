@@ -10,13 +10,14 @@ from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampl
 import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score
 import pandas as pd
-import hdbscan
+# import hdbscan
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from transformers import BertTokenizer, BertForSequenceClassification
 from sklearn.metrics import precision_score, recall_score, f1_score
 from sklearn.preprocessing import LabelEncoder
 
+from matplotlib.ticker import MaxNLocator
 
 from transformers import AutoTokenizer, AutoModel
 import torch
@@ -783,12 +784,26 @@ def plot_attention(attention_weights_list, titles, specific_index, pad_token_idx
     # Update axis labels
     ax.set_xticks(np.arange(num_tokens) + 0.5)
     ax.set_yticks(np.arange(num_tokens) + 0.5)
-    ax.set_xticklabels(labels, rotation=45, ha='right')
-    ax.set_yticklabels(labels, rotation=0)
+    ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=30, weight='bold')
+    ax.set_yticklabels(labels, rotation=0, fontsize=30, weight='bold')
+    cbar = ax.collections[0].colorbar
 
-    plt.title(f"{titles if isinstance(titles, str) else 'Attention Weights Visual'}")
-    plt.xlabel("Key")
-    plt.ylabel("Query")
+    cbar.ax.tick_params(labelsize=30, width=2)  # Set tick size and line width
+
+    cbar.locator = MaxNLocator(nbins=8)  # Adjust number of ticks as needed
+    cbar.ax.yaxis.set_major_locator(cbar.locator)
+    cbar.ax.tick_params(labelsize=30)
+
+    
+    # Explicitly apply bold formatting to each colorbar tick label
+    for label in cbar.ax.yaxis.get_ticklabels():
+        label.set_fontsize(30)  # Set font size
+        label.set_weight('bold')  # Set font weight to bold
+
+    
+    # plt.title(f"{titles if isinstance(titles, str) else 'Attention Weights Visual'}")
+    # plt.xlabel("Key")
+    # plt.ylabel("Query")
     plt.tight_layout()
     plt.show() 
     

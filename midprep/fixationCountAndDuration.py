@@ -257,7 +257,7 @@ def calculate_ratio(fix_dict, dur_dict):
 
 
 def main_original(): 
-    superpath = "/Users/suadhm/Desktop/new_annotated_gaze"
+    superpath = "/Users/-/Desktop/new_annotated_gaze"
     participants = os.listdir(superpath)
     with open('scan_paths_nonaggregate.pkl', 'rb') as file:
         scanpath_file = pickle.load(file)
@@ -448,7 +448,7 @@ def check_scanpath_vs_duration(scanpath, duration_dict):
 def editMain(): 
     count = 0
     scanpath_fixation_map = []
-    superpath = "/Users/suadhm/Desktop/new_annotated_gaze" #/Users/suadhm/Desktop/new_annotated_gaze/
+    superpath = "/Users/--/Desktop/new_annotated_gaze" #/Users/--/Desktop/new_annotated_gaze/
     
     # Load scanpath file (non-aggregated)
     with open('scan_paths_nonaggregate.pkl', 'rb') as file:
@@ -530,7 +530,7 @@ def editMain():
 def main(): 
     count = 0
     scanpath_fixation_map = []
-    superpath = "/Users/suadhm/Desktop/new_annotated_gaze" #/Users/suadhm/Desktop/new_annotated_gaze/
+    superpath = "/Users/--/Desktop/new_annotated_gaze" #/Users/--/Desktop/new_annotated_gaze/
     
     # Load scanpath file (non-aggregated)
     with open('scan_paths_nonaggregate.pkl', 'rb') as file:
@@ -543,7 +543,7 @@ def main():
             continue  # Skip this participant if already processed
         processed_participants.add(p)
 
-        participant_path = f"{superpath}/{p}" #/Users/suadhm/Desktop/new_annotated_gaze/315
+        participant_path = f"{superpath}/{p}" #/Users/--/Desktop/new_annotated_gaze/315
         
         # Check if the participant's path is valid
         if not os.path.isdir(participant_path):
@@ -630,7 +630,7 @@ def main():
 def main2():
     count = 0
     scanpath_fixation_map = []
-    superpath = "/Users/suadhm/Desktop/new_annotated_gaze"
+    superpath = "/Users/--/Desktop/new_annotated_gaze"
     #participants = os.listdir(superpath)
     #print(participants)
     # Load scanpath file (non-aggregated)
@@ -718,8 +718,8 @@ def main2():
             print(count)
             # Append the cleaned data to the map
             scanpath_fixation_map.append(final_dur_clean)
-            #/Users/suadhm/Desktop/new_annotated_gaze/147/annotated_gaze/147_gaze_writing_actionPerformed.csv
-            #/Users/suadhm/Desktop/new_annotated_gaze/315/annotated_gaze/315_gaze_writing_actionPerformed.csv
+            #/Users/--/Desktop/new_annotated_gaze/147/annotated_gaze/147_gaze_writing_actionPerformed.csv
+            #/Users/--/Desktop/new_annotated_gaze/315/annotated_gaze/315_gaze_writing_actionPerformed.csv
     
             #print(scanpath_fixation_map)
     #print(f"Total entries in scanpath_fixation_map: {len(scanpath_fixation_map)}")

@@ -734,7 +734,7 @@ def map_fixations_tokens_to_category(directory):
                     gaze_data.rename(columns=new_column_names, inplace=True)
                                     #print(gaze_data.columns[16:-2])  # Print to verify columns are renamed correctly
                                     # Save the modified DataFrame to the new annotated_gaze directory
-                    new_directory = os.path.join('/Users/suadhm/Desktop/Research/YuLab/FixationDurationTokenAbstract')
+                    new_directory = os.path.join('/Users/--/Desktop/Research/YuLab/FixationDurationTokenAbstract')
                     os.makedirs(new_directory, exist_ok=True)
                                     
                                     # Save CSV with renamed columns
@@ -823,8 +823,8 @@ def scanpath_processing():
         quality = row['Quality']
         participant = row['Participant']
         method_name = remove_suffix(row['Method'])        
-        gaze_directory = '/Users/suadhm/Desktop/Research/YuLab/new_annotated_gaze'
-        #gaze_directory = '/Users/suadhm/Desktop/Research/YuLab/annotated_gaze_data' # getting raw method token scan path
+        gaze_directory = '/Users/--/Desktop/Research/YuLab/new_annotated_gaze'
+        #gaze_directory = '/Users/--/Desktop/Research/YuLab/annotated_gaze_data' # getting raw method token scan path
         
         files_in_directory = os.listdir(gaze_directory)
         
@@ -1570,7 +1570,7 @@ def get_root_category(aoi):
 #     for index, row in data.iterrows():
 #         participant = row['Participant']
 #         method_name = remove_suffix(row['Method'])        
-#         gaze_directory = '/Users/suadhm/Desktop/Research/YuLab/new_annotated_gaze'
+#         gaze_directory = '/Users/--/Desktop/Research/YuLab/new_annotated_gaze'
         
 #         files_in_directory = os.listdir(gaze_directory)
 #         categories = {'function declaration', 'parameter', 'exception handling','variable_declaration','loop', 'variable',
@@ -1685,7 +1685,7 @@ def getAttentionSwitchCategory():
     for index, row in data.iterrows():
         participant = row['Participant']
         method_name = remove_suffix(row['Method'])        
-        gaze_directory = '/Users/suadhm/Desktop/Research/YuLab/new_annotated_gaze'
+        gaze_directory = '/Users/--/Desktop/Research/YuLab/new_annotated_gaze'
         
         files_in_directory = os.listdir(gaze_directory)
         
@@ -1784,9 +1784,9 @@ def mapGazeDatatoCategory():
         #print(participant, method_name)
         # Open annotated_gaze file
         # Path to the directory containing gaze files
-        gaze_directory = '/Users/suadhm/Desktop/Research/YuLab/annotated_gaze_data'
+        gaze_directory = '/Users/--/Desktop/Research/YuLab/annotated_gaze_data'
         
-        #new_annotated_gaze_directory = '/Users/suadhm/Desktop/new_annotated_gaze'
+        #new_annotated_gaze_directory = '/Users/--/Desktop/new_annotated_gaze'
     
         # List all files in the directory
         files_in_directory = os.listdir(gaze_directory)
@@ -1837,7 +1837,7 @@ def mapGazeDatatoCategory():
                                     gaze_data.rename(columns=new_column_names, inplace=True)
                                     #print(gaze_data.columns[16:-2])  # Print to verify columns are renamed correctly
                                     # Save the modified DataFrame to the new annotated_gaze directory
-                                    new_directory = os.path.join('/Users/suadhm/Desktop/new_annotated_gaze', str(participant), 'annotated_gaze')
+                                    new_directory = os.path.join('/Users/--/Desktop/new_annotated_gaze', str(participant), 'annotated_gaze')
                                     os.makedirs(new_directory, exist_ok=True)
                                     
                                     # Save CSV with renamed columns
@@ -2025,7 +2025,7 @@ def getAttentionSwitch():
         #print(participant, method_name)
         # Open annotated_gaze file
         # Path to the directory containing gaze files
-        gaze_directory = '/Users/suadhm/Desktop/Research/YuLab/annotated_gaze_data'
+        gaze_directory = '/Users/--/Desktop/Research/YuLab/annotated_gaze_data'
         
         # Check if the directory exists
         
@@ -2211,6 +2211,183 @@ def getCategoriesMetrics(method_list, method_files_dir):
     # Convert filtered_rows to a DataFrame
     print(countHighQ,countLowQ)
     df_result.to_csv('FixationDuration.csv', index=False)
+
+
+def aggregate_fixation_data(directory_path, output_file_path):
+    results = []
+
+    # Iterate through each file in the directory
+    for file in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, file)
+        print(f"Processing file: {file}")
+
+        # Ensure it's a CSV file
+        if not file.endswith('.csv'):
+            print(f"  Skipping {file}, not a CSV file.")
+            continue
+
+        # Read the fixation data
+        try:
+            fixation_data = pd.read_csv(file_path)
+            print(f"  Loaded data from {file} successfully.")
+        except Exception as e:
+            print(f"  Failed to read {file}: {e}")
+            continue
+
+        # Exclude non-fixation duration columns
+        fixation_columns = fixation_data.columns.difference(['pid', 'code', 'participant_summary'])
+        print(f"  Fixation columns identified: {list(fixation_columns)}")
+
+        # Calculate the fixation duration sum for each participant
+        for _, row in fixation_data.iterrows():
+            participant_id = row['pid']  # Get the participant ID
+            fixation_duration_sum = row[fixation_columns].sum()  # Sum fixation durations
+            print(f"    Participant {participant_id}: Sum = {fixation_duration_sum}")
+
+            # Append the result
+            results.append({
+                'Participant': participant_id,
+                'Method': remove_suffix(file),  # Include file name instead of method folder
+                'Fixation_Duration': fixation_duration_sum
+            })
+
+    # Create a DataFrame from the results
+    df_results = pd.DataFrame(results)
+    print(f"Aggregated results preview:\n{df_results.head()}")
+
+    # Save the results to a CSV file
+    try:
+        df_results.to_csv(output_file_path, index=False)
+        print(f"Results saved to {output_file_path}")
+    except Exception as e:
+        print(f"Failed to save results: {e}")
+
+def aggregate_fixation_data_with_quality(directory_path, data_csv_path, output_file_path):
+    # Load the data.csv file for quality lookup
+    try:
+        data_csv = pd.read_csv(data_csv_path)
+        print(f"Loaded {data_csv_path} successfully.")
+    except Exception as e:
+        print(f"Failed to load {data_csv_path}: {e}")
+        return
+    
+    results = []
+    data_csv['Method'] = data_csv['Method'].apply(lambda x: remove_suffix(x))
+
+    # Iterate through each file in the directory
+    for file in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, file)
+        print(f"Processing file: {file}")
+
+        # Ensure it's a CSV file
+        if not file.endswith('.csv'):
+            print(f"  Skipping {file}, not a CSV file.")
+            continue
+
+        # Read the fixation data
+        try:
+            fixation_data = pd.read_csv(file_path)
+            print(f"  Loaded data from {file} successfully.")
+        except Exception as e:
+            print(f"  Failed to read {file}: {e}")
+            continue
+
+        # Exclude non-fixation duration columns
+        fixation_columns = fixation_data.columns.difference(['pid', 'code', 'participant_summary'])
+        print(f"  Fixation columns identified: {list(fixation_columns)}")
+
+        # Calculate the fixation duration sum and lookup quality
+        for _, row in fixation_data.iterrows():
+            participant_id = row['pid']
+            fixation_duration_sum = row[fixation_columns].sum()
+
+            # Lookup Quality for the participant and method
+            quality_match = data_csv[
+                (data_csv['Participant'] == participant_id) & 
+                (data_csv['Method'] == remove_suffix(file))
+            ]
+            
+            if not quality_match.empty:
+                quality = quality_match['Quality'].values[0]
+                print(f"    Participant {participant_id}: Quality = {quality}")
+            else:
+                quality = 2
+                print(f"    Participant {participant_id}: No matching quality found.")
+            
+            # Append the result
+            results.append({
+                'Participant': participant_id,
+                'Quality': quality,
+                'Method': remove_suffix(file),
+                'Fixation_Duration': fixation_duration_sum
+                
+            })
+
+    # Create a DataFrame from the results
+    df_results = pd.DataFrame(results)
+    print(f"Aggregated results preview:\n{df_results.head()}")
+
+    # Save the results to a CSV file
+    try:
+        df_results.to_csv(output_file_path, index=False)
+        print(f"Results saved to {output_file_path}")
+    except Exception as e:
+        print(f"Failed to save results: {e}")
+
+def run_statistical_tests(file_path, metric_name):
+    # Step 1: Load the data from the CSV file
+    df = pd.read_csv(file_path)
+
+    # Step 2: Split data into low (Quality 0) and high (Quality 1) quality groups
+    low_quality_group = df[df['Quality'] == 0][metric_name]
+    high_quality_group = df[df['Quality'] == 1][metric_name]
+
+    # Step 3: Calculate mean and standard deviation for both groups
+    low_quality_mean = low_quality_group.mean()
+    low_quality_std = low_quality_group.std()
+    high_quality_mean = high_quality_group.mean()
+    high_quality_std = high_quality_group.std()
+    
+    print(f"Low Quality group: Mean = {low_quality_mean}, Standard Deviation = {low_quality_std}")
+    print(f"High Quality group: Mean = {high_quality_mean}, Standard Deviation = {high_quality_std}")
+    
+    
+    # Step 3: Shapiro-Wilk test for normality on both groups
+    low_quality_shapiro = shapiro(low_quality_group)
+    high_quality_shapiro = shapiro(high_quality_group)
+
+
+    
+    print(f"Shapiro-Wilk test for Low Quality group: Statistic = {low_quality_shapiro.statistic}, p-value = {low_quality_shapiro.pvalue}")
+    print(f"Shapiro-Wilk test for High Quality group: Statistic = {high_quality_shapiro.statistic}, p-value = {high_quality_shapiro.pvalue}")
+    
+    # Check if both groups are normally distributed
+    if low_quality_shapiro.pvalue > 0.05 and high_quality_shapiro.pvalue > 0.05:
+        # Normality assumption holds for both groups
+        print("Both groups are normally distributed.")
+    else:
+        # At least one group is not normally distributed
+        print("At least one group is not normally distributed. Proceeding with non-parametric tests.")
+    
+    # Step 4: Levene's test for equality of variances
+    levene_test = levene(low_quality_group, high_quality_group)
+    print(f"Levene's test for equality of variances: Statistic = {levene_test.statistic}, p-value = {levene_test.pvalue}")
+    
+    # Check if variances are equal
+    if levene_test.pvalue > 0.05:
+        print("Variances are equal between the two groups.")
+    else:
+        print("Variances are not equal between the two groups.")
+    
+    # Step 5: Mann-Whitney U test (non-parametric test for comparing the two groups)
+    mann_whitney_test = mannwhitneyu(low_quality_group, high_quality_group, alternative='two-sided')
+    print(f"Mann-Whitney U test: Statistic = {mann_whitney_test.statistic}, p-value = {mann_whitney_test.pvalue}")
+
+    # Determine significance based on p-values
+    if mann_whitney_test.pvalue < 0.05:
+        print("There is a statistically significant difference between the low and high quality groups.")
+    else:
+        print("There is no statistically significant difference between the low and high quality groups.")
 
 def remove_suffix(method):
     # Remove numbers after underscore and ".csv" extension
@@ -2474,7 +2651,7 @@ def basicStatsAttention(aoiType):
     excludedParticipants = pd.read_csv('excludedParticipants.csv')
     # print(excludedParticipants.head())  # Print the first few rows to check the column name
 
-    data = pd.read_csv('/Users/suadhm/Desktop/midprep/attentionSwitches1.csv')
+    data = pd.read_csv('/Users/--/Desktop/midprep/attentionSwitches1.csv')
    # print(data)
     # Drop rows that are in the exclude_data list
     data = data[~data[['Participant', 'Method']].apply(tuple, axis=1).isin(excludedParticipants[['Participant', 'Method']].apply(tuple, axis=1))]
@@ -2930,21 +3107,34 @@ if __name__ == '__main__':
     #abstractScanPathProcessing()
 
     #3 Fetches fixation count and duration per summary & creates files: FixationCount/FixationDuration
-    #getCategoriesMetrics(maxCategories('/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_duration_writing'),'/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_duration_writing')
+    #getCategoriesMetrics(maxCategories('/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing'),'/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing')
+    # aggregate_fixation_data('/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing','fixationduration_tokens.csv')
+#     aggregate_fixation_data_with_quality(
+#     '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing', 
+#     'data.csv', 
+#     'fixationduration_tokens.csv'
+# )
+#     aggregate_fixation_data_with_quality(
+#     '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_counts_writing', 
+#     'data.csv', 
+#     'fixationcount_tokens.csv'
+# )
     
+    # run_statistical_tests('fixationcount_tokens.csv', 'Fixation_Duration')
+    # run_statistical_tests('fixationduration_tokens.csv', 'Fixation_Duration')
     #4. peforms basic stats report (mean, std) for count/duration 
     # currently low: 202 and high: 227 = 429 
     # model current: 
-    # /Users/suadhm/Desktop/midprep/abstract_fixaction_counts_writing
-    # basicStats('lowQualityRatings.csv','/Users/suadhm/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
-    # basicStats('lowQualityRatings.csv','/Users/suadhm/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # /Users/--/Desktop/midprep/abstract_fixaction_counts_writing
+    # basicStats('lowQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
+    # basicStats('lowQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
     
-    # basicStats('highQualityRatings.csv','/Users/suadhm/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
-    # basicStats('highQualityRatings.csv','/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # basicStats('highQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
+    # basicStats('highQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
     
     # #4.2 Manual T-test
-    # mean1, std1 = basicStats('lowQualityRatings.csv','/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_count_writing', 'avgFixationCount')
-    # mean2, std2 = basicStats('highQualityRatings.csv','/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_count_writing', 'avgFixationCount')
+    # mean1, std1 = basicStats('lowQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing', 'avgFixationCount')
+    # mean2, std2 = basicStats('highQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing', 'avgFixationCount')
     # n1 = 202  # Assuming the sample size of low quality
     # n2 = 227  # Assuming the sample size is high quallity
 
@@ -2953,14 +3143,14 @@ if __name__ == '__main__':
     # print("T-statistic:", t_statistic)
     # print("P-value:", p_value)
 
-    # basicStatsRevised('lowQualityRatings.csv', 'highQualityRatings.csv', '/Users/suadhm/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
-    # basicStatsRevised('finalData.csv', '/Users/suadhm/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
-    # basicStatsRevised('finalData.csv', '/Users/suadhm/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCounts')
+    # basicStatsRevised('lowQualityRatings.csv', 'highQualityRatings.csv', '/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
+    # basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCounts')
 
-    # basicStatsRevised('highQualityRatings.csv','/Users/suadhm/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
+    # basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
 
-    # basicStatsRevised('lowQualityRatings.csv','/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
-    # basicStatsRevised('highQualityRatings.csv','/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # basicStatsRevised('lowQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
 
     #5. performs t-test by method group for count/duration
     #pairedttest('FixationCount.csv')
@@ -2971,7 +3161,7 @@ if __name__ == '__main__':
 
     #7. basic stats of attention switch -> avg/std of large aoi & small aoi
     basicStatsAttention('AttentionSwitch_Token')
-    basicStatsAttention('AttentionSwitch_CodetoSummary')
+    # basicStatsAttention('AttentionSwitch_CodetoSummary')
     #8. paired t -test of attention swithc by method (large aoi * small aoi)
     #print(pd.read_csv('attentionSwitches.csv'))
     #pairedttestAttention('attentionSwitches.csv','AttentionSwitch_CodetoSummary')
@@ -2983,7 +3173,7 @@ if __name__ == '__main__':
     # getAttentionSwitchCategory()
     # aggregate_attention_switches('attentionSwitchesCategoryRevised.csv')
     # perform_manova('attentionSwitchesCategoryRevised.csv')
-    post_hoc_ttest('attentionSwitchesCategoryRevised.csv')
+    # post_hoc_ttest('attentionSwitchesCategoryRevised.csv')
     #t_test_category('attentionSwitchesCategory.csv')
     #t_test_category_update('attentionSwitchesCategory.csv')
 
@@ -3002,16 +3192,16 @@ if __name__ == '__main__':
     #12. Map features: fixation duration, fixation count, attention switches to scan path
     #(315, fetchString, 0): {(function declaration: 15.2, 10, 4), ... 
     # Map tokens in fixationCount/fixationDuration to abstract counterparts 
-    #map_fixations_tokens_to_category('/Users/suadhm/Desktop/Research/YuLab/FixationDurationTokens')
+    #map_fixations_tokens_to_category('/Users/--/Desktop/Research/YuLab/FixationDurationTokens')
     # Map attention switches for semantic categories without grouping categories
     #map_attentionswitches()
     # Map fixation count to scan path categories: 
-    #map_fixations('/Users/suadhm/Desktop/Research/YuLab/FixationDurationTokenAbstractNonaggregate')
+    #map_fixations('/Users/--/Desktop/Research/YuLab/FixationDurationTokenAbstractNonaggregate')
     # Re-map attention switches 
     # Map features to scan path sequence
 
     # Additional analysis for significant results: attention switch by tokens -> do attention switches mean shorter scanpaths? 
-    # ratioList = scanpath_ratio('/Users/suadhm/Desktop/Research/YuLab/FixationCountToken')
+    # ratioList = scanpath_ratio('/Users/--/Desktop/Research/YuLab/FixationCountToken')
     #fixation_ratio_map(ratioList)
     #compare_fixation_ratios('fixationRatio.csv')
     # scanpath_length_difference('fixationRatio.csv')
@@ -3022,7 +3212,7 @@ if __name__ == '__main__':
     #scanpath_processing()
     #check to see if raw scanpath == to semantic category scanpath
     #scanpathvalidation()
-    #map_columns_between_directories('/Users/suadhm/Desktop/Research/YuLab/annotated_gaze_data','/Users/suadhm/Desktop/new_annotated_gaze')
+    #map_columns_between_directories('/Users/--/Desktop/Research/YuLab/annotated_gaze_data','/Users/--/Desktop/new_annotated_gaze')
     #model_token_map('final_mappings.pkl', 'scan_paths_nonaggregate_fixDuration_new.pkl')
 
     #first pass and regression path calculations
@@ -3030,7 +3220,7 @@ if __name__ == '__main__':
 
     #excluding data to make sure all stats match: get_null_entries_dynamic
     # get_null_entries_dynamic('attentionSwitchesCategory.csv')
-    # check_files_in_directory('excludedParticipants.csv', '/Users/suadhm/Desktop/midprep/abstract_fixation_duration_writing')
+    # check_files_in_directory('excludedParticipants.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing')
     
     #check distribution of low and high quality in data: 
     # count_quality_per_participant('finalData.csv')
@@ -3041,8 +3231,8 @@ if __name__ == '__main__':
     #methodList = ratingsprocessing("filtered_rating_neg3.pkl", methodList)
     #methodList = ratingsprocessing("highQualityRatings.pkl", methodList)
 
-    #participant_methods_count(maxCategories('/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_count_writing'))
-    #fetchEyeMetrics(maxCategories('/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_count_writing'))
+    #participant_methods_count(maxCategories('/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing'))
+    #fetchEyeMetrics(maxCategories('/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing'))
     #*** 
     #revisedList = ratingsprocessing("Revised_Ratings.pkl", revisedList)
 
@@ -3052,7 +3242,7 @@ if __name__ == '__main__':
     #2. Combine low/high summmaries into single data set with quality column
     #abstractScanPathProcessing()
 
-    #findLostMethods("/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_count_writing")
+    #findLostMethods("/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing")
     # Count the frequency of terms
     #csv_file = 'categorieslowquality.csv'
     #word_occurrences = count_word_occurrences(csv_file)
@@ -3061,7 +3251,7 @@ if __name__ == '__main__':
     #for word, count in word_occurrences.items():
         #print(f"{word}: {count}")   
 
-    #getColumnsinDirectory('/Users/suadhm/Desktop/Research/YuLab/abstract_fixation_count_writing')
+    #getColumnsinDirectory('/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing')
 
     #print(len(revisedList))
     #print(revisedList)

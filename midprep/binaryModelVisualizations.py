@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import precision_score, recall_score, f1_score
 from sklearn.preprocessing import LabelEncoder
+from matplotlib.ticker import MaxNLocator
 
 
 import pandas as pd
-import hdbscan
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from transformers import BertTokenizer, BertForSequenceClassification
@@ -84,7 +84,7 @@ class Transformer(nn.Module):
         # Total embedding dimension for the transformer input
         total_embedding_dim = reduced_method_dim + category_dim + duration_dim
         # total_embedding_dim = reduced_method_dim + category_dim # feature isolation for individual heatmaps
-        # total_embedding_dim = reduced_method_dim + duration_dim # feature isolation for individual heatmaps
+        total_embedding_dim = reduced_method_dim + duration_dim # feature isolation for individual heatmaps
 
         # Positional encoding
         self.positional_encoding = nn.Parameter(
@@ -145,17 +145,17 @@ class Transformer(nn.Module):
         duration_embeddings = duration_embeddings.squeeze(1)  # Same for duration_embeddings
 
         # Concatenate embeddings along the feature dimension
-        combined_embeddings = torch.cat(
-            (method_embeddings, category_embeddings, duration_embeddings), dim=2
-        )  # Shape: (batch_size, seq_len, total_embedding_dim)
+        # combined_embeddings = torch.cat(
+        #     (method_embeddings, category_embeddings, duration_embeddings), dim=2
+        # )  # Shape: (batch_size, seq_len, total_embedding_dim)
 
         # combined_embeddings = torch.cat(
         #     (method_embeddings, category_embeddings), dim=2
         # )  # Shape: (batch_size, seq_len, total_embedding_dim)
 
-        # combined_embeddings = torch.cat(
-        #     (method_embeddings, duration_embeddings), dim=2
-        # )  # Shape: (batch_size, seq_len, total_embedding_dim)
+        combined_embeddings = torch.cat(
+            (method_embeddings, duration_embeddings), dim=2
+        )  # Shape: (batch_size, seq_len, total_embedding_dim)
 
         # Apply dropout after concatenation
         combined_embeddings = self.dropout(combined_embeddings)
@@ -948,21 +948,35 @@ def plot_attention(attention_weights_list, titles, specific_index, pad_token_idx
     num_tokens = attention_weights.shape[0]
     labels = [str(i) for i in range(num_tokens)]  # Start labels from 0
 
-    # Plot the attention heatmap 7fc896ff, d45f5fff, 659fd5ff
+    # Plot the attention heatmap ff943dff, d45f5fff, 659fd5ff
     plt.figure(figsize=(10, 8))
-    custom_cmap = sns.light_palette("#ff943dff", as_cmap=True)
+    custom_cmap = sns.light_palette("#d45f5fff", as_cmap=True)
 
     ax = sns.heatmap(attention_weights, cmap=custom_cmap, square=True, annot=False)
     
     # Update axis labels
     ax.set_xticks(np.arange(num_tokens) + 0.5)
     ax.set_yticks(np.arange(num_tokens) + 0.5)
-    ax.set_xticklabels(labels, rotation=45, ha='right')
-    ax.set_yticklabels(labels, rotation=0)
+    ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=30, weight='bold')
+    ax.set_yticklabels(labels, rotation=0, fontsize=30, weight='bold')
+    cbar = ax.collections[0].colorbar
 
-    plt.title(f"{titles if isinstance(titles, str) else 'Attention Weights'}")
-    plt.xlabel("Key")
-    plt.ylabel("Query")
+    cbar.ax.tick_params(labelsize=30, width=2)  # Set tick size and line width
+
+    cbar.locator = MaxNLocator(nbins=8)  # Adjust number of ticks as needed
+    cbar.ax.yaxis.set_major_locator(cbar.locator)
+    cbar.ax.tick_params(labelsize=30)
+
+    
+    # Explicitly apply bold formatting to each colorbar tick label
+    for label in cbar.ax.yaxis.get_ticklabels():
+        label.set_fontsize(30)  # Set font size
+        label.set_weight('bold')  # Set font weight to bold
+
+    
+    # plt.title(f"{titles if isinstance(titles, str) else 'Attention Weights Visual'}")
+    # plt.xlabel("Key")
+    # plt.ylabel("Query")
     plt.tight_layout()
     plt.show() 
     # Plot the attention heatmap
@@ -1372,7 +1386,7 @@ def plot_aggregate_attention_with_context_(attention_weights_list, titles, model
 
     # Sort the categories
     sorted_categories = sorted(all_categories)
-    modified_categories = [category.replace("function", "method") for category in sorted_categories]
+    modified_categories = [category.replace("function", "method").title() for category in sorted_categories]
 
 
     # sorted_categories = sorted([category.replace("function", "method") for category in all_categories])
@@ -1388,6 +1402,7 @@ def plot_aggregate_attention_with_context_(attention_weights_list, titles, model
                                               for attention_map in aggregated_attention_weights])
 
     # Plot the aggregated attention heatmap
+            
     plt.figure(figsize=(10, 8))
     custom_cmap = sns.light_palette("#567d59ff", as_cmap=True)
     sns.heatmap(
@@ -1400,7 +1415,7 @@ def plot_aggregate_attention_with_context_(attention_weights_list, titles, model
     )
     plt.title(f"{titles if isinstance(titles, str) else 'Aggregated Attention Weights'}")
     
-    plt.xticks(rotation=45, ha='right')
+    plt.xticks(rotation=45, ha='right', fontsize=12)
     plt.tight_layout()
     plt.show()
 
@@ -1586,13 +1601,13 @@ if __name__ == '__main__':
     print(f"Length of Padded Data: {len(padded_data)}")
 
         # Plot the attention weights
-    plot_attention(
-        attention_weights,
-        titles= "Combined Feature Model", specific_index=28)
-
     # plot_attention(
     #     attention_weights,
-    #     titles= "Combined Feature Model: Semantic Category", specific_index=28)
+    #     titles= "Combined Feature Model", specific_index=28)
+
+    plot_attention(
+        attention_weights,
+        titles= "Combined Feature Model: Semantic Category", specific_index=28)
     modelmap = load_data('model_map.pkl')
 
     
