@@ -21,7 +21,7 @@ The goal of this research is to explore the role of visual behaviors in code sum
     - These files contain the implementation of models for predicting the quality of code summaries based on eye-tracking features.
 
 - **Supporting Files**: Additional files used to support the analysis and experiments.
-    - `Task_Data_Vandy.csv`, `categories.csv`, `abstract_code_parts.pkl`, `finalDataset.csv`, etc.
+    - `Task_Data_V.csv`, `categories.csv`, `abstract_code_parts.pkl`, `finalDataset.csv`, etc.
 
 - **Visualizations**: Scripts and outputs for visualizing data and model predictions.
     - `binaryModelVisualizations.py`, `baseModelVisualizations.py`, etc.
