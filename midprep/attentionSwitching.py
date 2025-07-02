@@ -35,7 +35,7 @@ def calculate_switches(aois):
     return switches
         
 def main():
-    filepath = "/home/zachkaras/code_summ_data"
+    filepath = "/home/Z/code_summ_data"
     participants = os.listdir(filepath)
     all_switches = {} 
     for person in participants:
