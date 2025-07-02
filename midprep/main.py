@@ -3178,7 +3178,7 @@ if __name__ == '__main__':
     #t_test_category_update('attentionSwitchesCategory.csv')
 
     # 10. Correlation between expertise and quality summary 
-    # assign_expertise("NDStudy.csv", "Task_Data_Vandy.csv")
+    # assign_expertise("NStudy.csv", "Task_Data_V.csv")
     # participants_distribution()
     # compare_and_correlate_experience()
     #plot_histograms()

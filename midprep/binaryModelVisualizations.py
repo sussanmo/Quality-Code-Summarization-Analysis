@@ -1385,9 +1385,16 @@ def plot_aggregate_attention_with_context_(attention_weights_list, titles, model
             all_attention_values.append(attention_weight)
 
     # Sort the categories
+    # Externally Defined Variable Or Method
     sorted_categories = sorted(all_categories)
-    modified_categories = [category.replace("function", "method").title() for category in sorted_categories]
-
+    print(sorted_categories)
+    modified_categories = [
+    category.replace("function", "method")
+            .replace("externally defined variable or method", "external var/method")
+            .title()
+    for category in sorted_categories
+    ]
+    print(modified_categories)
 
     # sorted_categories = sorted([category.replace("function", "method") for category in all_categories])
 
