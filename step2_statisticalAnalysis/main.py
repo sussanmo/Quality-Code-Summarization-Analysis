@@ -15,11 +15,11 @@ from transformers import BertModel, BertTokenizer, BertForSequenceClassification
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-import re
-from statsmodels.multivariate.manova import MANOVA
-import statsmodels.api as sm
-from statsmodels.formula.api import ols
-from statsmodels.stats.multitest import multipletests
+# import re
+# from statsmodels.multivariate.manova import MANOVA
+# import statsmodels.api as sm
+# from statsmodels.formula.api import ols
+# from statsmodels.stats.multitest import multipletests
 
 def count_quality_per_participant(file_path):
     """
@@ -2778,16 +2778,16 @@ def basicStatsRevised(final_data_file, parentdir, metric):
     print(final_data[final_data['Quality'] == 0][metric].describe())
     print(final_data[final_data['Quality'] == 1][metric].describe())
 
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    plt.figure(figsize=(10, 6))
-    sns.histplot(final_data[final_data['Quality'] == 0][metric], kde=True, label='Low Quality', color='blue')
-    sns.histplot(final_data[final_data['Quality'] == 1][metric], kde=True, label='High Quality', color='red')
-    plt.legend()
-    plt.title(f"Distribution of {metric} for Low and High Quality")
-    plt.xlabel(metric)
-    plt.ylabel('Frequency')
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # import seaborn as sns
+    # plt.figure(figsize=(10, 6))
+    # sns.histplot(final_data[final_data['Quality'] == 0][metric], kde=True, label='Low Quality', color='blue')
+    # sns.histplot(final_data[final_data['Quality'] == 1][metric], kde=True, label='High Quality', color='red')
+    # plt.legend()
+    # plt.title(f"Distribution of {metric} for Low and High Quality")
+    # plt.xlabel(metric)
+    # plt.ylabel('Frequency')
+    # plt.show()
 
     # Perform T-Test or Mann-Whitney U Test based on normality and variance assumptions
     if p < 0.05:  # If not normal
@@ -2947,29 +2947,32 @@ def filterSummaryRating(filedir):
                      
     #with open('highQualityRatings.pkl', 'wb') as output:
         #pickle.dump(highQdict, output)
-    total_sum_reshaped = np.array(totalSum).reshape(-1, 1)
+#     total_sum_reshaped = np.array(totalSum).reshape(-1, 1)
 
-    kmeans = KMeans(n_clusters=3 )  # Adjust the number of clusters as needed
+#     kmeans = KMeans(n_clusters=3 )  # Adjust the number of clusters as needed
 
-    # Fit KMeans to your data
-    kmeans.fit(total_sum_reshaped)
+#     # Fit KMeans to your data
+#     kmeans.fit(total_sum_reshaped)
 
-    # Get cluster labels for each data point
-    cluster_labels = kmeans.labels_
+#     # Get cluster labels for each data point
+#     cluster_labels = kmeans.labels_
 
-    # Print cluster labels
-    unique_labels, label_counts = np.unique(cluster_labels, return_counts=True)
+#     # Print cluster labels
+#     unique_labels, label_counts = np.unique(cluster_labels, return_counts=True)
 
-# Print the counts
-    for label, count in zip(unique_labels, label_counts):
-        print(f"Cluster {label}: {count} occurrences")
+# # Print the counts
+#     for label, count in zip(unique_labels, label_counts):
+#         print(f"Cluster {label}: {count} occurrences")
 
-    centroids = kmeans.cluster_centers_
+#     centroids = kmeans.cluster_centers_
 
 # Print the centroids
-    for i, centroid in enumerate(centroids):
-        print(f"Cluster {i} centroid: {centroid[0]}")
+    # for i, centroid in enumerate(centroids):
+    #     print(f"Cluster {i} centroid: {centroid[0]}")
     
+    print(f"Length of High Quality {len(highQdict)}")
+    print(f"Length of Low Quality {len(lowQdict)}")
+    print(f"Length of Neutral Quality {len(neutralQdict)}")
     ratingSum_counts = {}
 
 # Count occurrences of each ratingSum
@@ -2984,7 +2987,7 @@ def filterSummaryRating(filedir):
     for ratingSum, count in ratingSum_counts.items():
         print(f"RatingSum {ratingSum}: {count} occurrences")
 
-    with open('highQualityRatings.csv', 'w', newline='') as f:
+    with open('highQualityRatingsNew.csv', 'w', newline='') as f:
         writer = csv.writer(f)
     # Write header
         writer.writerow(fields)
@@ -3001,7 +3004,7 @@ def filterSummaryRating(filedir):
                 #for value in values:
                     #writer.writerow([participant, key, *value])
 
-    with open('neutralQualityRatings.csv', 'w', newline='') as f:
+    with open('neutralQualityRatingsNew.csv', 'w', newline='') as f:
         writer = csv.writer(f)
     # Write header
         writer.writerow(fields)
@@ -3016,7 +3019,7 @@ def filterSummaryRating(filedir):
         #pickle.dump(lowQdict, output) 
 
     # Write low quality ratings to CSV
-    with open('lowQualityRatings.csv', 'w', newline='') as f:
+    with open('lowQualityRatingsNew.csv', 'w', newline='') as f:
         writer = csv.writer(f)
     # Write header
         writer.writerow(fields)
@@ -3089,8 +3092,56 @@ def abstractScanPathProcessing():
     print(result_df)
 
     result_df.to_csv('data.csv', index=False)
-    
-    
+
+
+import os
+import pandas as pd
+
+def check_participant_method_in_files(exclude_file, parentdir):
+    exclude_data = pd.read_csv(exclude_file)
+    missing = []
+
+    # Cache to avoid reloading the same file multiple times
+    method_file_cache = {}
+
+    for _, row in exclude_data.iterrows():
+        participant = row['participant']
+        method = row['method']
+        methodname = method.split('_', 1)[0]
+
+        # Load the method file only once
+        if methodname not in method_file_cache:
+            method_path = os.path.join(parentdir, f"{methodname}.csv")
+            if os.path.exists(method_path):
+                df_method = pd.read_csv(method_path)
+                method_file_cache[methodname] = df_method
+            else:
+                # Method file does not exist
+                method_file_cache[methodname] = None
+
+        df_method = method_file_cache[methodname]
+
+        if df_method is not None:
+            # Check if participant exists in the method file under 'pid' column
+            if participant in df_method['pid'].values:
+                # participant exists in method file: print the row from exclude_data
+                participant_rows = df_method[df_method['pid'] == participant]
+                print(f"Participant {participant} found in method {method}. Rows in method file:")
+                print(participant_rows)
+                print(f"Exclude file row: {row.to_dict()}")
+            else:
+                # participant not found in method file
+                missing.append((participant, method))
+        else:
+            # method file missing altogether
+            missing.append((participant, method))
+
+    if missing:
+        print("\nMissing participant-method pairs (participant not found in method file or file missing):")
+        for p, m in missing:
+            print(f"Participant: {p}, Method: {m}")
+    else:
+        print("\nAll participant-method pairs found in corresponding files.")
 
 #method to find common categories
 if __name__ == '__main__':
@@ -3122,6 +3173,7 @@ if __name__ == '__main__':
     
     # run_statistical_tests('fixationcount_tokens.csv', 'Fixation_Duration')
     # run_statistical_tests('fixationduration_tokens.csv', 'Fixation_Duration')
+
     #4. peforms basic stats report (mean, std) for count/duration 
     # currently low: 202 and high: 227 = 429 
     # model current: 
@@ -3160,7 +3212,7 @@ if __name__ == '__main__':
     #getAttentionSwitch()
 
     #7. basic stats of attention switch -> avg/std of large aoi & small aoi
-    basicStatsAttention('AttentionSwitch_Token')
+    # basicStatsAttention('AttentionSwitch_Token')
     # basicStatsAttention('AttentionSwitch_CodetoSummary')
     #8. paired t -test of attention swithc by method (large aoi * small aoi)
     #print(pd.read_csv('attentionSwitches.csv'))
@@ -3222,6 +3274,7 @@ if __name__ == '__main__':
     # get_null_entries_dynamic('attentionSwitchesCategory.csv')
     # check_files_in_directory('excludedParticipants.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing')
     
+    # check_participant_method_in_files('midprep/neutralQualityRatings.csv', '/Users/suadhm/Desktop/Quality-Code-Summarization-Analysis/Data/abstract_fixaction_counts_writing')
     #check distribution of low and high quality in data: 
     # count_quality_per_participant('finalData.csv')
     #-------------
@@ -3237,7 +3290,7 @@ if __name__ == '__main__':
     #revisedList = ratingsprocessing("Revised_Ratings.pkl", revisedList)
 
     #1. Classifies low v. neutral v. high quality
-    #filterSummaryRating("Revised_Ratings.pkl")
+    filterSummaryRating("Data/Revised_Ratings.pkl")
 
     #2. Combine low/high summmaries into single data set with quality column
     #abstractScanPathProcessing()

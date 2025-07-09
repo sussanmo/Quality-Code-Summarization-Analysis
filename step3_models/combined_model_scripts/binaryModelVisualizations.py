@@ -1621,13 +1621,13 @@ if __name__ == '__main__':
 
     # def plot_attention_with_context(attention_weights_list, titles, specific_index, model_map, pad_token_idx=0):
     # Single heatmap for semanticCategory
-    # plot_attention_with_context(
-    #     attention_weights_list=attention_weights,
-    #     titles="Semantic Categories",
-    #     specific_index=28,
-    #     model_map=modelmap,
-    #     pad_token_idx=0
-    # )       
+    plot_attention_with_context(
+        attention_weights_list=attention_weights,
+        titles="Semantic Categories",
+        specific_index=28,
+        model_map=modelmap,
+        pad_token_idx=0
+    )       
 
     # plot_all_attention_with_context(
     #     attention_weights_list=attention_weights,
@@ -1635,10 +1635,10 @@ if __name__ == '__main__':
     #     model_map=modelmap,
     #     pad_token_idx=0)
 
-    plot_aggregate_attention_with_context_(
-        attention_weights_list=attention_weights,
-        titles="Aggregate Semantic Categories Attention",
-        model_map=modelmap,
-        pad_token_idx=0)
+    # plot_aggregate_attention_with_context_(
+    #     attention_weights_list=attention_weights,
+    #     titles="Aggregate Semantic Categories Attention",
+    #     model_map=modelmap,
+    #     pad_token_idx=0)
     
 
