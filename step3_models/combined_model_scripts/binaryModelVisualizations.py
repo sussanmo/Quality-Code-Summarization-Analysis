@@ -609,140 +609,6 @@ class EarlyStopping:
     def load_best_model(self, model):
         model.load_state_dict(self.best_model_state)
 
-# import numpy as np
-# import seaborn as sns
-# import matplotlib.pyplot as plt
-
-# def plot_attention(attention_weights_list, titles, specific_index):
-#     """
-#     Plots the attention weights heatmap for a specific index, highlighting the boundary if needed.
-
-#     Parameters:
-#     - attention_weights_list: List of lists containing attention tensors.
-#     - titles: Title for the plot (string or list).
-#     - specific_index: Index specifying which attention matrix to visualize.
-#     """
-#     attention_weights = None
-
-#     # Validate the specific_index
-#     if specific_index < 0 or specific_index > 37:
-#         print("Invalid index. Please provide an index between 0 and 37.")
-#         return
-
-#     # Iterate through attention_weights_list
-#     for list_idx, tensor_list in enumerate(attention_weights_list):
-#         print(f"Processing list {list_idx}:")
-
-#         # Check if the tensor_list is valid
-#         if tensor_list is None or len(tensor_list) == 0:
-#             continue
-
-#         # Iterate through each batch tensor in the list
-#         for batch_idx, batch_tensor in enumerate(tensor_list):
-#             # Iterate through each sample in the batch
-#             for sample_idx in range(batch_tensor.size(0)):  # Iterate over the batch dimension
-#                 sample = batch_tensor[sample_idx]  # Shape: (33, 33)
-
-#                 # If the sample matches the specific index, select it
-#                 if sample_idx == specific_index:
-#                     print(f"    Processing List {list_idx}, Batch {batch_idx}, Sample {sample_idx}, Shape: {sample.shape}")
-#                     attention_weights = sample
-#                     break
-#             if attention_weights is not None:
-#                 break
-#         if attention_weights is not None:
-#             break
-
-#     # Validate if attention_weights was found
-#     if attention_weights is None:
-#         print(f"No attention weights found for specific index {specific_index}.")
-#         return
-
-#     # Convert attention weights to numpy if it's a tensor
-#     if hasattr(attention_weights, 'detach'):
-#         attention_weights = attention_weights.detach().cpu().numpy()
-
-#     # Check the shape and ensure it's 2D
-#     if attention_weights.ndim == 3:  # Shape: (batch, seq, seq)
-#         attention_weights = attention_weights[0]  # Remove batch dimension
-#     elif attention_weights.ndim != 2:
-#         print(f"Invalid attention weights shape: {attention_weights.shape}")
-#         return
-
-#     print(f"Attention Matrix Shape: {attention_weights.shape}")
-
-#     # Apply find_boundary if necessary
-#     if 'find_boundary' in globals():
-#         boundary_index = find_boundary(attention_weights)
-#         print(f"Boundary index: {boundary_index}")
-#     else:
-#         print("Warning: 'find_boundary' function not defined.")
-
-#     # Plot the attention heatmap
-#     plt.figure(figsize=(10, 8))
-    
-#     # Highlight the boundary if necessary
-#     if boundary_index < attention_weights.shape[0]:
-#         # Set the part of the matrix after the boundary to a different color, e.g., zero out the values after the boundary
-#         attention_weights[boundary_index:] = np.nan  # Set the values after the boundary to NaN (not plotted)
-#         sns.heatmap(attention_weights, cmap="Blues", square=True, annot=False, cbar_kws={'label': 'Attention Weight'})
-#         plt.axvline(x=boundary_index, color='r', linestyle='--', label='Boundary')  # Mark the boundary
-#         plt.axhline(y=boundary_index, color='r', linestyle='--')
-#     else:
-#         sns.heatmap(attention_weights, cmap="Blues", square=True, annot=False, cbar_kws={'label': 'Attention Weight'})
-
-#     plt.title(f"Attention Weights: {titles if isinstance(titles, str) else 'Heatmap'}")
-#     plt.xlabel("Key Positions")
-#     plt.ylabel("Query Positions")
-#     plt.tight_layout()
-#     plt.legend(loc="upper right")
-#     plt.show()
-
-
-
-# def find_boundary(arrays):
-#     last_array = arrays[0]
-#     for idx, current_array in enumerate(arrays[1:], start=1):  # Start enumeration from 1, since we have already considered the 0-th element as the last_array.
-#         if np.allclose(current_array, last_array):  # Use np.allclose to check if all elements are approximately equal, considering possible floating-point errors.
-#             return idx  # Return the index where the repetition starts.
-#         last_array = current_array
-#     return len(arrays)  # Return the length of arrays if no repetition is found.
-
-# def find_boundar(attention_matrix):
-#     """
-#     Finds the boundary index in the attention matrix where attention values exceed a dynamic threshold.
-
-#     Parameters:
-#     - attention_matrix: A 2D numpy array of attention weights.
-
-#     Returns:
-#     - boundary_index: The first row or column index where the attention exceeds the threshold.
-#     """
-#     # Validate the matrix dimensions
-#     if attention_matrix.ndim != 2 or attention_matrix.shape[0] != attention_matrix.shape[1]:
-#         print(f"Invalid attention matrix shape: {attention_matrix.shape}. Must be square (N x N).")
-#         return None
-
-#     # Calculate the dynamic threshold (using percentile of row sums)
-#     row_sums = np.sum(attention_matrix, axis=1)
-#     threshold_percentile = 90  # Use the 90th percentile of row sums as a threshold
-#     threshold = np.percentile(row_sums, threshold_percentile)
-#     print(f"Row Sums: {row_sums}")
-#     print(f"90th Percentile Threshold: {threshold}")
-
-#     # Check each row for boundary detection relative to this percentile threshold
-#     for i in range(attention_matrix.shape[0]):
-#         row_sum = row_sums[i]
-#         print(f"Row {i} Sum: {row_sum} (Threshold: {threshold})")
-        
-#         if row_sum >= threshold:  # Compare with percentile threshold
-#             print(f"Boundary found at index {i} with row sum {row_sum}.")
-#             return i
-
-#     # If no boundary is found, return the last index as the default
-#     print("No boundary exceeded the threshold. Returning the last index.")
-#     return attention_matrix.shape[0] - 1
-
 def find_boundary(attention_weights):
     """
     Find the index where the repetition starts in the attention matrix based on query-key pairs.
@@ -819,43 +685,6 @@ def find_scanpathLength_boundary(index):
         print(f"Index {index} not found in the dictionary.")
         return None
 
-    
-# def find_boundary_(attention_weights):
-#     """
-#     Find the index where the repetition starts in the attention matrix based on query-key pairs.
-
-#     Parameters:
-#     - attention_weights: 2D numpy array of attention weights.
-
-#     Returns:
-#     - index of the boundary where repetition starts.
-#     """
-    
-#     num_queries, num_keys = attention_weights.shape
-#     print("Query-Key Values (q*v):")
-
-#     # Iterate over all query and key pairs
-#     for i in range(1, num_queries):
-#         for j in range(num_keys):
-#             q_v_value = attention_weights[i, j]
-#             #print(f"Query {i}, Key {j}, Value: {q_v_value:.5f}")
-    
-#     # Check for repetition
-#     for i in range(1, num_queries):  # Start at 1 to skip the first row
-#         for j in range(i):  # Compare with all previous rows
-#             if np.allclose(attention_weights[i], attention_weights[j]):
-#                 print(f"Repetition detected between rows {i} and {j}")
-#                 print("Attention weights up to the boundary:")
-#                 for k in range(i + 1):  # Include the row where repetition is found
-#                     print(f"Row {k}: {attention_weights[k]}")
-                
-#                 return i  # Return the index where repetition starts
-#             else:
-                
-#                 # Debugging: Print differences when rows do not match
-#                 diff = np.abs(attention_weights[i] - attention_weights[j])
-#                 print(f"Row {i} vs Row {j} differences: {diff}")
-#     return attention_weights.shape[0]  # If no repetition, return the size of the matrix
 
 def plot_attention(attention_weights_list, titles, specific_index, pad_token_idx=0):
     """
@@ -1115,33 +944,6 @@ def plot_attention_with_context(attention_weights_list, titles, specific_index, 
     plt.tight_layout()
     plt.show()
 
-# def getAllValidSetScanpathData(model_map, start_index=293, end_index=293+36):
-#     """
-#     Returns the scanpath data for all indices in the validation set within a given range.
-
-#     Parameters:
-#     - model_map: Dictionary loaded from `model_map.pkl` containing scanpath information.
-#     - start_index: The starting index of the range (default is 293).
-#     - end_index: The ending index of the range (default is 293+36).
-
-#     Returns:
-#     - A list of tuples, where each tuple contains (pid, quality, method_name, scanpaths) for each index in the range.
-#     """
-#     scanpath_data_list = []
-#     indexCount = 0
-#     for (pid, quality, method_name), scanpaths in model_map.items():
-#         indexCount += 1
-#         if start_index <= indexCount <= end_index:
-#             print(f"Found data for pid {pid} (method: {method_name}, quality: {quality}) at index {indexCount}")
-#             scanpath_data_list.append((pid, quality, method_name, scanpaths))
-#     if scanpath_data_list:
-#         print(len(scanpath_data_list))
-#         print((scanpath_data_list))
-#         return scanpath_data_list
-#     else:
-#         print(f"No scanpath data found in the range {start_index}-{end_index}.")
-#         return None
-    
 def getAllValidSetScanpathData(model_map):
     """
     Returns the scanpath data for all indices in the validation set with correct participant ID, 
@@ -1607,10 +1409,6 @@ if __name__ == '__main__':
 
     print(f"Length of Padded Data: {len(padded_data)}")
 
-        # Plot the attention weights
-    # plot_attention(
-    #     attention_weights,
-    #     titles= "Combined Feature Model", specific_index=28)
 
     plot_attention(
         attention_weights,

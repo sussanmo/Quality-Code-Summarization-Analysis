@@ -15,11 +15,11 @@ from transformers import BertModel, BertTokenizer, BertForSequenceClassification
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-# import re
-# from statsmodels.multivariate.manova import MANOVA
-# import statsmodels.api as sm
-# from statsmodels.formula.api import ols
-# from statsmodels.stats.multitest import multipletests
+import re
+from statsmodels.multivariate.manova import MANOVA
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+from statsmodels.stats.multitest import multipletests
 
 def count_quality_per_participant(file_path):
     """
@@ -128,151 +128,6 @@ def get_null_entries_dynamic(file_path):
     return null_entries.values.tolist()
     # return null_entries 
 
-def run_t_tests_on_durations(results):
-    # Prepare lists to hold first-pass and go-past durations by quality group
-    first_pass_low_quality = []
-    first_pass_high_quality = []
-    go_past_low_quality = []
-    go_past_high_quality = []
-    
-    # Loop through results for each participant-method combination
-    for (participant, quality, method), categories in results.items():
-        for cat, durations in categories.items():
-            first_pass = durations['first_pass_duration']
-            go_past = durations['go_past_duration']
-            
-            # Separate the durations by quality group
-            if quality == 0:  # low quality
-                first_pass_low_quality.append(first_pass)
-                go_past_low_quality.append(go_past)
-            elif quality == 1:  # high quality
-                first_pass_high_quality.append(first_pass)
-                go_past_high_quality.append(go_past)
-    
-    # Print average durations for each quality group
-    avg_first_pass_low = sum(first_pass_low_quality) / len(first_pass_low_quality) if first_pass_low_quality else 0
-    avg_first_pass_high = sum(first_pass_high_quality) / len(first_pass_high_quality) if first_pass_high_quality else 0
-    avg_go_past_low = sum(go_past_low_quality) / len(go_past_low_quality) if go_past_low_quality else 0
-    avg_go_past_high = sum(go_past_high_quality) / len(go_past_high_quality) if go_past_high_quality else 0
-
-    print(f"Average First-Pass Duration (Low Quality): {avg_first_pass_low}")
-    print(f"Average First-Pass Duration (High Quality): {avg_first_pass_high}")
-    print(f"Average Go-Past Duration (Low Quality): {avg_go_past_low}")
-    print(f"Average Go-Past Duration (High Quality): {avg_go_past_high}")
-    
- # Function to check normality using Shapiro-Wilk test
-    def check_normality(data):
-        stat, p_value = stats.shapiro(data)
-        return p_value > 0.05  # Return True if data is normally distributed
-
-    # Check normality for first-pass durations
-    normal_first_pass_low = check_normality(first_pass_low_quality)
-    normal_first_pass_high = check_normality(first_pass_high_quality)
-    
-    # Check normality for go-past durations
-    normal_go_past_low = check_normality(go_past_low_quality)
-    normal_go_past_high = check_normality(go_past_high_quality)
-
-    # Print normality check results
-    print(f"First-Pass (Low Quality) Normality: {'Normal' if normal_first_pass_low else 'Not Normal'}")
-    print(f"First-Pass (High Quality) Normality: {'Normal' if normal_first_pass_high else 'Not Normal'}")
-    print(f"Go-Past (Low Quality) Normality: {'Normal' if normal_go_past_low else 'Not Normal'}")
-    print(f"Go-Past (High Quality) Normality: {'Normal' if normal_go_past_high else 'Not Normal'}")
-
-    # Perform t-test or Mann-Whitney U test based on normality
-    def perform_test(group1, group2, test_type="t-test"):
-        if test_type == "t-test":
-            t_stat, p_value = stats.ttest_ind(group1, group2)
-            return t_stat, p_value
-        elif test_type == "mann-whitney":
-            u_stat, p_value = stats.mannwhitneyu(group1, group2)
-            return u_stat, p_value
-
-    # Run tests for first-pass durations
-    if normal_first_pass_low and normal_first_pass_high:
-        print("Running t-test for First-Pass Duration")
-        t_stat_first_pass, p_value_first_pass = perform_test(first_pass_low_quality, first_pass_high_quality, "t-test")
-        print(f"First-Pass Duration: t-statistic = {t_stat_first_pass}, p-value = {p_value_first_pass}")
-    else:
-        print("Running Mann-Whitney U test for First-Pass Duration")
-        u_stat_first_pass, p_value_first_pass = perform_test(first_pass_low_quality, first_pass_high_quality, "mann-whitney")
-        print(f"First-Pass Duration: U-statistic = {u_stat_first_pass}, p-value = {p_value_first_pass}")
-    
-    # Run tests for go-past durations
-    if normal_go_past_low and normal_go_past_high:
-        print("Running t-test for Go-Past Duration")
-        t_stat_go_past, p_value_go_past = perform_test(go_past_low_quality, go_past_high_quality, "t-test")
-        print(f"Go-Past Duration: t-statistic = {t_stat_go_past}, p-value = {p_value_go_past}")
-    else:
-        print("Running Mann-Whitney U test for Go-Past Duration")
-        u_stat_go_past, p_value_go_past = perform_test(go_past_low_quality, go_past_high_quality, "mann-whitney")
-        print(f"Go-Past Duration: U-statistic = {u_stat_go_past}, p-value = {p_value_go_past}")
-
-    # Return results
-    return {
-        'first_pass_stat': u_stat_first_pass if not normal_first_pass_low or not normal_first_pass_high else t_stat_first_pass,
-        'first_pass_p_value': p_value_first_pass,
-        'go_past_stat': u_stat_go_past if not normal_go_past_low or not normal_go_past_high else t_stat_go_past,
-        'go_past_p_value': p_value_go_past
-    }
-
-# first pass and regression path calculations: 
-def calculate_durations(pickle_file):
-    # Load data from pickle file
-    with open(pickle_file, 'rb') as f:
-        data = pickle.load(f)
-    
-    results = {}
-    
-    for (participant, quality, method), tokens in data.items():
-        print(f"\nProcessing Participant: {participant}, Quality: {quality}, Method: {method}")
-        semantic_durations = {}
-        previous_category = None  # Track the previous base category
-        
-        for token_data in tokens:
-            for token, category_info in token_data.items():
-                for semantic_category, duration in category_info.items():
-                    base_category = semantic_category.split('.')[0]  # Remove suffix like ".1"
-                    
-                    if base_category not in semantic_durations:
-                        semantic_durations[base_category] = {
-                            'first_pass': 0,
-                            'go_past': 0,
-                            'current_pass': 0,
-                            'left_region': False
-                        }
-                    
-                    # Print debug information
-                    print(f"Token: {token}, Semantic Category: {semantic_category}, Duration: {duration}")
-                    
-                    # Update first-pass duration if still in the region
-                    if not semantic_durations[base_category]['left_region']:
-                        semantic_durations[base_category]['first_pass'] += duration
-                        print(f"  [First-Pass] Adding {duration} to {base_category}: Total = {semantic_durations[base_category]['first_pass']}")
-                    
-                    # Always update go-past duration
-                    semantic_durations[base_category]['go_past'] += duration
-                    print(f"  [Go-Past] Adding {duration} to {base_category}: Total = {semantic_durations[base_category]['go_past']}")
-                    
-                    # Mark as having left if moving to a new base category
-                    if previous_category is not None and previous_category != base_category:
-                        semantic_durations[previous_category]['left_region'] = True
-                        print(f"  [Left Region] {previous_category} marked as left.")
-                    
-                    # Update previous category
-                    previous_category = base_category
-        
-        # Store results for this participant-method
-        results[(participant, quality, method)] = {
-            cat: {
-                'first_pass_duration': durations['first_pass'],
-                'go_past_duration': durations['go_past']
-            } for cat, durations in semantic_durations.items()
-        }
-
-    print("\nFinal Results:")
-    # print(results)
-    return results
 
 
 def model_token_map(mapfile, durationfile):
@@ -328,14 +183,8 @@ def model_token_map(mapfile, durationfile):
 
     #return model_map
 
-# Example usage:
-# mapfile = 'final_mappings.pkl'
-# durationfile = 'durationfile.pkl'
-# model_map_result = model_token_map(mapfile, durationfile)
-# print(model_map_result)
 
-
-def map_columns_between_directories(gaze_directory, new_gaze_directory):
+def map_columns_to_new_directories(gaze_directory, new_gaze_directory):
     # Dictionary to store column mappings
     column_mappings = {}
 
@@ -444,183 +293,7 @@ def map_columns_between_directories(gaze_directory, new_gaze_directory):
     with open('final_mappings.pkl', 'wb') as f:  
         pickle.dump(final_mappings, f)
 
-#length of the scan path 
-def scanpath_length_difference(file):
-    data = pd.read_csv(file)
-    
-    excluded_data = pd.read_csv('excludedParticipants.csv')
 
-    data = data[~data[['Participant', 'Method']].apply(tuple, axis=1).isin(excluded_data[['Participant', 'Method']].apply(tuple, axis=1))]
-
-    
-    # Open and load the scan path file
-    with open('scan_paths_nonaggregate.pkl', 'rb') as scanpathfile:
-        scanpaths = pickle.load(scanpathfile)
-    
-    # Create a dictionary to store scanpath lengths
-    scanpath_lengths = {}
-    
-    # Calculate the length of each scanpath
-    for (pid, quality, method), scanpath in scanpaths.items():
-        # Assuming scanpath is a list or similar iterable
-        length = len(scanpath)
-        scanpath_lengths[(pid, method)] = length
-    
-    # Iterate over rows in the data to update fixation ratios
-    for index, row in data.iterrows():
-        participant = row['Participant']
-        method_name = remove_suffix(row['Method'])
-        
-        # Find the corresponding fixation ratio from the scanpath lengths
-        for (pid, method), length in scanpath_lengths.items():
-            if pid == participant and method == method_name:
-                # Update the dataframe with the length (or fixation ratio, if applicable)
-                data.at[index, 'Scanpath_Length'] = length
-    
-    data.to_csv('fixationRatio.csv', index=False)   
-    print()
-
-#t-test between fixation ratios
-def compare_fixation_ratios(data_file, variable):
-    # Load the dataset
-    data = pd.read_csv(data_file)
-    excluded_data = pd.read_csv('excludedParticipants.csv')
-
-    data = data[~data[['Participant', 'Method']].apply(tuple, axis=1).isin(excluded_data[['Participant', 'Method']].apply(tuple, axis=1))]
-
-    
-    # Drop rows where 'Fixation_Ratio' is NaN
-    data = data.dropna(subset=[variable])
-
-    print(len(data))
-    # Separate data into two groups based on the 'Quality' column
-    group_0 = data[data['Quality'] == 0][variable]
-    group_1 = data[data['Quality'] == 1][variable]
-    # Calculate and print mean fixation ratios for both groups
-    mean_group_0 = group_0.mean()
-    std_group_0 = group_0.std()
-    mean_group_1 = group_1.mean()
-    std_group_1 = group_1.std()
-
-    # Print the results
-    print(f"Group 0 - Mean: {mean_group_0}, Std Dev: {std_group_0}")
-    print(f"Group 1 - Mean: {mean_group_1}, Std Dev: {std_group_1}")
-    # Perform an independent t-test between the two groups
-    # t_stat, p_value = stats.ttest_ind(group_0, group_1, equal_var=False)  # Welch's t-test (if variances are unequal)
-    t_stat, p_value = mannwhitneyu(group_0, group_1)
-
-    # Print the results
-    print(f"T-Statistic: {t_stat}")
-    print(f"P-Value: {p_value}")
-
-#append fixation ratios to data.csv 
-def fixation_ratio_map(ratioList):
-    data = pd.read_csv('data.csv')
-    for index, row in data.iterrows():
-        
-        participant = row['Participant']
-        method_name = remove_suffix(row['Method']) 
-        for (pid, method), fixationRatio in ratioList.items(): 
-            if pid == participant and method == method_name:
-                data.at[index, 'Fixation_Ratio'] = fixationRatio
-    data.to_csv('fixationRatio.csv', index=False)   
-    
-#compare ratios of tokens fixated over total tokens in method 
-def scanpath_ratio(directory):
-   
-    files_in_directory = os.listdir(directory) 
-    results = {}  # Dictionary to hold the results 
-
-    data = pd.read_csv('data.csv') # store ratio to data.csv to compare by group 
-    
-    # Iterate over the files to find the gaze file for the current participant and method
-    for file in files_in_directory:
-        gaze_file_path = os.path.join(directory, file)
-
-        # Open the gaze file and process it
-        try: 
-            methodFile = pd.read_csv(gaze_file_path, skip_blank_lines=True)
-            methodName = remove_suffix(file)
-
-            # Extract total tokens columns (excluding 'pid', 'code', 'participant_summary')
-            totalTokens = methodFile.iloc[:, 1:-2]  # Skip the first column (pid), last two (code, participant_summary)
-               
-            # Iterate over each row (each participant) in the file
-            for index, row in methodFile.iterrows(): 
-                    participant = row['pid']
-                    tokenFixated = 0
-                
-                # Count the number of tokens fixated (value > 0)
-                    for token_value in row[1:-2]:  # Iterating over all token values in this row
-                        if token_value > 0: 
-                            tokenFixated += 1
-
-                # Calculate the ratio of fixated tokens over total tokens for this participant
-                    totalTokenCount = totalTokens.shape[1]  # Number of token columns
-                    fixation_ratio = tokenFixated / totalTokenCount if totalTokenCount > 0 else 0
-                    
-                # Store the result (participant, methodName) -> fixation ratio
-                    results[(participant, methodName)] = fixation_ratio
-                    #data.at[index, 'Fixation_ratio'] = fixation_ratio
-
-        except Exception as e:
-            print(f"Error processing file '{file}': {e}")
-    print(results)
-    #data.to_csv('fixationRatio.csv', index=False)
-    return results
-#map fixation to scan path
-def map_fixations(directory):
-    with open('scan_paths_nonaggregate.pkl', 'rb') as file:
-        scanpathfile = pickle.load(file)
-
-    #open directory 
-    files_in_directory = os.listdir(directory) 
-    results = {}  # Dictionary to hold the results 
-        # Iterate over the files to find the gaze file for the current participant and method
-    for file in files_in_directory:
-        gaze_file_path = os.path.join(directory, file)
-
-        #open file: 
-        try: 
-            methodFile = pd.read_csv(gaze_file_path,skip_blank_lines=True)
-            methodName = remove_suffix(file)
-            print(methodFile)
-            #print(gaze_data)
-            #gaze_data.dropna(how='all')
-            columns_to_map = methodFile.iloc[:, 1:-2] 
-            # for participant in methodfile
-            for index, row in methodFile.iterrows(): 
-                participant = row['pid']
-                # find corresponding participant, method in scanpath file
-                for (pid, _, method), scan_path in scanpathfile.items():
-            
-            # check if pid == participant 
-                    if pid == participant and method == remove_suffix(methodName):
-                #print('found')
-                # Initialize a dictionary to track attention switch mapping
-                        category_switch_count = {}
-                         # for each category in scan path 
-                        for category in scan_path: 
-                            #find category in methodFile column 
-                            for col in columns_to_map:
-                                # match category to column name in methodfile
-                                if category == col:
-                                    # get fixation and append to category scanpath
-                                    fixation = row[col] if pd.notna(row[col]) else 0
-                                    category_switch_count[category] = fixation
-                                    break;
-            
-                        results[(participant, methodName)] = category_switch_count
-        except Exception as e:
-            print(f"Error processing file '{file}': {e}")
-
-    for key, path in results.items():
-        print(f"Participant: {key[0]}, Method: {key[1]}")
-        print(f"Scan Path: {path}") 
-        break;
-    
-    
-    print()
 #map attention switch to scanpath_nonaggregated
 def map_attentionswitches():
     # Load the scan path pickle file
@@ -653,20 +326,11 @@ def map_attentionswitches():
                         if category == column_name:
                             # Get the attention switch count for this category from the CSV
                             attention_switch = row[col] if pd.notna(row[col]) else 0
-                        # Map the category to its attention switch value
-                            # Update category to have it mapped
-                            #if category in category_switch_count:
-                                #print(category_switch_count)
-                                #category_switch_count[category] += attention_switch
-                            #else:
+                    
                             category_switch_count[category] = attention_switch
                             break;
 
-                #get the attentionswitch 
-                #update category to have it mapped 
-                #example: function declaration.1 : 5
-                #if attentionswith null, set category:attentionset to 0
-                #example: function declaration.1 : 0
+               
                 results[(participant, quality, methodName)] = category_switch_count
     for key, path in results.items():
         print(f"Participant: {key[0]}, Method: {key[1]}")
@@ -675,88 +339,7 @@ def map_attentionswitches():
     print()
 
 
-#Map tokens fixation count, duartion to category counterparts
-def map_fixations_tokens_to_category(directory):
-    #data = pd.read_csv('data.csv')
-    methodFound = 0
-    #read in file: 
-    with open("abstract_code_parts.pkl", "rb") as f:
-            categoryData = pickle.load(f)
-    
-    count = 0 
-    corruptFiles = 0
-    
-    
-        # List all files in the directory
-    files_in_directory = os.listdir(directory) 
-        
-        # Iterate over the files to find the gaze file for the current participant and method
-    for file in files_in_directory:
-        gaze_file_path = os.path.join(directory, file)
-        #open file: 
-        try: 
-            gaze_data = pd.read_csv(gaze_file_path,skip_blank_lines=True, quoting=csv.QUOTE_ALL)
-            #print(gaze_data)
-            #gaze_data.dropna(how='all')
-            columns_to_map = gaze_data.iloc[:, 1:-2]
-            #print(columns_to_map)
-            
-
-            method_name = remove_suffix(file)
-            #print(method_name)
-            if method_name in categoryData:
-                
-                method_category_data = categoryData[method_name]
-                #print(method_name, method_category_data)
-                # Map tokens to categories
-                # Create a dictionary to store the new column names
-                new_column_names = {}
-                seen_categories = {}
-                
-                for col in columns_to_map:
-                    category = map_token_to_category(col, method_category_data)
-                    if category:
-                        #if not isinstance(category, str):
-                            #raise ValueError(f"Invalid category: {category}")
-                        
-                        # If category has been seen, increment its count
-                        #if category in seen_categories:
-                            #seen_categories[category] += 1
-                            #new_column_name = f"{category}.{seen_categories[category]}"
-                        #else:
-                            #seen_categories[category] = 0
-                            #new_column_name = category
-                        new_column_names[col] = category
-                        #new_column_names[col] = new_column_name
-            
-                if new_column_names:
-                                    #print(f"New column names for {gaze_file_name}: {new_column_names}")
-                    gaze_data.rename(columns=new_column_names, inplace=True)
-                                    #print(gaze_data.columns[16:-2])  # Print to verify columns are renamed correctly
-                                    # Save the modified DataFrame to the new annotated_gaze directory
-                    new_directory = os.path.join('/Users/--/Desktop/Research/YuLab/FixationDurationTokenAbstract')
-                    os.makedirs(new_directory, exist_ok=True)
-                                    
-                                    # Save CSV with renamed columns
-                    new_gaze_file_path = os.path.join(new_directory, f'{method_name}.csv')
-                    gaze_data.rename(columns=new_column_names, inplace=True)
-                    gaze_data.to_csv(new_gaze_file_path, index=False)
-                    
-                                    
-                                    #print(f"Saved renamed CSV to: {new_gaze_file_path}")
-                    count +=1
-                  
-        except Exception as e:
-            print(f"Error processing file '{file}': {e}")
-                                #print(len(gaze_data.columns))
-                               # Define columns containing tokens to map
-            methodFound+=1
-        
-                                
-    print(methodFound)                            
-    #print(corruptFiles )
-    print()
-
+  
 
 def get_base_category(category_name):
     """
@@ -786,18 +369,7 @@ def preprocess_scanpath(file):
     # Initialize the scan path list
     scan_path = []
     prev_category = ''
-    #----- for aggregated scan path
-    # Iterate through each row to determine the scan path
-    #prev_category = None
-    #for index, row in file.iterrows():
-        #for category in category_columns:
-            #if pd.notnull(row[category]):
-                #base_category = get_base_category(category)
-                #if base_category != prev_category:
-                    #scan_path.append(base_category)
-                    #prev_category = base_category
-                #break  # Move to the next row after finding the first non-null category
-    #---
+
     # Iterate through each row to determine the scan path
     for index, row in file.iterrows():
         for category in category_columns:
@@ -823,8 +395,8 @@ def scanpath_processing():
         quality = row['Quality']
         participant = row['Participant']
         method_name = remove_suffix(row['Method'])        
-        gaze_directory = '/Users/--/Desktop/Research/YuLab/new_annotated_gaze'
-        #gaze_directory = '/Users/--/Desktop/Research/YuLab/annotated_gaze_data' # getting raw method token scan path
+        gaze_directory = '/Users/--/Desktop/Research/Lab/new_annotated_gaze'
+        #gaze_directory = '/Users/--/Desktop/Research/Lab/annotated_gaze_data' # getting raw method token scan path
         
         files_in_directory = os.listdir(gaze_directory)
         
@@ -922,7 +494,7 @@ def participants_distribution(data_file='data.csv'):
         raise ValueError("Required columns are not present in the data.")
 
 # import pandas as pd
-# from scipy.stats import shapiro, mannwhitneyu, ttest_ind, spearmanr
+# from scipy.stats import shapiro, mannwhitne, ttest_ind, spearmanr
 
 def compare_and_correlate_experience(data_file='data.csv'):
     # Read the data
@@ -976,22 +548,13 @@ def compare_and_correlate_experience(data_file='data.csv'):
         else:
             # # If either is not normally distributed, use Mann-Whitney U test
             print("\nYearsCoding or JavaExperience is not normally distributed. Using Mann-Whitney U test.")
-            stat_years, p_value_years = mannwhitneyu(group_0['YearsCoding'], group_1['YearsCoding'])
+            stat_years, p_value_years = mannwhitne(group_0['YearsCoding'], group_1['YearsCoding'])
             print(f"Mann-Whitney U test for YearsCoding: U-statistic={stat_years}, p-value={p_value_years}")
             
-            stat_java, p_value_java = mannwhitneyu(group_0['JavaExperience'], group_1['JavaExperience'])
+            stat_java, p_value_java = mannwhitne(group_0['JavaExperience'], group_1['JavaExperience'])
             print(f"Mann-Whitney U test for JavaExperience: U-statistic={stat_java}, p-value={p_value_java}")
             
-            # print("\nUsing t-test for comparison between low and high quality groups:")
         
-            # # t-test for YearsCoding between low and high quality groups
-            # t_stat_years, p_t_years = ttest_ind(group_0['YearsCoding'], group_1['YearsCoding'])
-            # print(f"t-test for YearsCoding: t-statistic={t_stat_years}, p-value={p_t_years}")
-            
-            # # t-test for JavaExperience between low and high quality groups
-            # t_stat_java, p_t_java = ttest_ind(group_0['JavaExperience'], group_1['JavaExperience'])
-            # print(f"t-test for JavaExperience: t-statistic={t_stat_java}, p-value={p_t_java}")
-            
         # Spearman's rank correlation for YearsCoding with Quality (0 or 1)
         # corr_years, p_corr_years = spearmanr(data['YearsCoding'], data['Quality'])
         corr_years, p_corr_years = pearsonr(data['YearsCoding'], data['Quality'])
@@ -1029,23 +592,7 @@ def test_normality_shapiro(data_file='data.csv'):
         print (f"stat_years{stat_years}, p_value_years{p_value_years}")
     else:
         raise ValueError("Required columns are not present in the data.")
-    
-def plot_histograms(data_file='data.csv'):
-    data = pd.read_csv(data_file)
-    if 'Quality' in data.columns and 'YearsCoding' in data.columns:
-        plt.figure(figsize=(12, 6))
-        
-        plt.subplot(1, 2, 1)
-        plt.hist(data['Quality'], bins=20, edgecolor='k')
-        plt.title('Histogram of Quality')
-        
-        plt.subplot(1, 2, 2)
-        plt.hist(data['YearsCoding'], bins=20, edgecolor='k')
-        plt.title('Histogram of YearsCoding')
-        
-        plt.show()
-    else:
-        raise ValueError("Required columns are not present in the data.")
+
 
 def run_correlation_update():
     df = pd.read_csv('data.csv')
@@ -1062,19 +609,6 @@ def run_correlation_update():
     #print(f"Pearson correlation: {pearson_corr:.4f}, p-value: {pearson_p_value:.4f}")
     print(f"Spearman correlation: {spearman_corr:.4f}, p-value: {spearman_p_value:.4f}")
 
-def run_correlation(data_file='data.csv'):
-    # Read the data file
-        data = pd.read_csv(data_file)
-    
-        # Check if 'Quality' and 'years_coding' columns exist
-        if 'Quality' in data.columns and 'YearsCoding' in data.columns:
-        # Calculate the correlation between Quality and years_coding
-            spearman_corr, spearman_p_value = spearmanr(data['Quality'], data['YearsCoding'])
-
-            print(spearman_corr, spearman_p_value)
-        else:
-            raise ValueError("The required columns ('Quality', 'years_coding') are not present in the data.")
-        
 def assign_expertise(file, file1):
     nd_demo = pd.read_csv(file)
     vd_demo = pd.read_csv(file1)
@@ -1102,33 +636,8 @@ def assign_expertise(file, file1):
     # Save the updated data back to 'data.csv' or return it if needed
     data.to_csv('data.csv', index=False)
     #print(len(all_demo))
-  
 
-def make_experience_terciles(df, criteria):
-    if criteria == 'java':
-        column = 'Java Experience'
-    elif criteria == 'years':
-        column = 'Years Coding'
-    
-    novice_i = np.where(df['Years Coding'] <= 4)[0]
-    novices = df.loc[novice_i, 'ID']
-    
-    #expert_i = np.where(df['Years Coding'] > 6)[0]
-    expert_i = np.where(df['Years Coding'] == 5 | df['Years Coding'] == 6)[0]
-    experts = df.loc[expert_i, 'ID']
-    return [str(pid) for pid in novices], [str(pid) for pid in experts]
 
-#- Attention switches:
-  #  - midprocessing scanpatch
-   # - 2_AST: abstract_code_parts
-
-#read abstract code parts and map to tokens in annotated gaze data
-#open file: task.csv
-#open abstract code parts & search for participant: method
-#abstract code: 
-#key (method -.csv), value (key: token, value: category)
-#once found, iterate through categories in dicttionary
-#for each category, count attetnion swtich inside
 # Function to aggregate the attention switches for each category
 def aggregate_category_switches(df, category):
     # Filter columns that start with the category name
@@ -1192,10 +701,6 @@ def t_test_category_update(file):
         print(f"  High Quality - Mean: {stats['high_mean']:.4f}, Std Dev: {stats['high_std']:.4f}")
         print(f"  Low Quality - Mean: {stats['low_mean']:.4f}, Std Dev: {stats['low_std']:.4f}")
         print(f"  t-statistic: {stats['t_stat']:.4f}, p-value: {stats['p_value']:.4f}\n")
-#t-test for category
-def t_test_category(file):
-    # Load your data
-    df = pd.read_csv(file)
 
 # Categories and corresponding columns
     categories = {
@@ -1278,18 +783,7 @@ def t_test_category(file):
     for category, results in ttest_results.items():
         print(f"{category}: t-stat = {results['t_stat']}, p-value = {results['p_value']}")
 
-    # Check the distribution of data in each category
-    #for category in categories.keys():
-        #print(f"\nCategory: {category}")
-        #print(df[category].describe())
 
-    # Check for missing values
-    #missing_values = df.isnull().sum()
-    #print("\nMissing values in each column:\n", missing_values)
-
-    # Check the group sizes
-    #group_sizes = df['Quality'].value_counts()
-    #print("\nGroup sizes in 'Quality':\n", group_sizes)
         
 def aggregate_attention_switches(input_file):
     """
@@ -1359,6 +853,7 @@ def perform_manova(data_path):
 
     # Print the summary of the MANOVA results
     print(result.summary())
+
 def post_hoc_ttest(file, correction_method="bonferroni"):
     """
     Perform post-hoc t-tests for each dependent variable, check for normality first, 
@@ -1393,7 +888,7 @@ def post_hoc_ttest(file, correction_method="bonferroni"):
         if low_quality_data.var() == 0 or high_quality_data.var() == 0:
             print(f"Warning: {var} has zero variance in one or both groups. Skipping normality test.")
             # Perform Mann-Whitney U test directly
-            u_statistic, p_value = stats.mannwhitneyu(low_quality_data, high_quality_data, alternative="two-sided")
+            u_statistic, p_value = stats.mannwhitne(low_quality_data, high_quality_data, alternative="two-sided")
             t_statistic = u_statistic  # Use U-statistic in the result for consistency
             shapiro_results = {"Low Quality P-Value": None, "High Quality P-Value": None}
             levene_p_value = None
@@ -1415,7 +910,7 @@ def post_hoc_ttest(file, correction_method="bonferroni"):
                 t_statistic, p_value = stats.ttest_ind(low_quality_data, high_quality_data, equal_var=False)
             else:
                 # Perform Mann-Whitney U test if data is not normal
-                u_statistic, p_value = stats.mannwhitneyu(low_quality_data, high_quality_data, alternative="two-sided")
+                u_statistic, p_value = stats.mannwhitne(low_quality_data, high_quality_data, alternative="two-sided")
                 t_statistic = u_statistic  # Use U-statistic in the result for consistency
             
             shapiro_results = {"Low Quality P-Value": low_shapiro_p, "High Quality P-Value": high_shapiro_p}
@@ -1430,71 +925,6 @@ def post_hoc_ttest(file, correction_method="bonferroni"):
             "High Quality Shapiro P-Value": shapiro_results["High Quality P-Value"]
         })
 
-    # Convert results to DataFrame
-    results_df = pd.DataFrame(ttest_results)
-    
-    # Apply multiple comparisons correction
-    corrected = multipletests(results_df["P-Value"], method=correction_method)
-    results_df["Corrected P-Value"] = corrected[1]
-    results_df["Significant"] = corrected[0]
-    
-    print(results_df)
-    return results_df
-
-def post_hoc_ttest_old(file, correction_method="bonferroni"):
-    """
-    Perform post-hoc t-tests for each dependent variable, check for normality first, 
-    and apply multiple comparisons correction.
-
-    Parameters:
-        file (str): The dataset containing the variables.
-        correction_method (str): Method for multiple comparisons correction ("bonferroni" or "fdr_bh").
-    
-    Returns:
-        pd.DataFrame: Results with p-values before and after correction.
-    """
-    data = pd.read_csv(file)
-    # Load the excluded participants data
-    excluded_data = pd.read_csv('excludedParticipants.csv')
-
-    # Drop rows from the main dataset that are in the excluded participants list
-    data = data[~data[['Participant', 'Method']].apply(tuple, axis=1).isin(excluded_data[['Participant', 'Method']].apply(tuple, axis=1))]
-
-
-    # Dependent variables: All AttentionSwitch variables
-    dependent_vars = [col for col in data.columns if col.startswith('AttentionSwitch')]
-    independent_var = "Quality"
-    
-    ttest_results = []
-
-    for var in dependent_vars:
-        # Split data into low and high quality groups
-        low_quality_data = data[data[independent_var] == 0][var]
-        high_quality_data = data[data[independent_var] == 1][var]
-
-        # Check for zero variance in both groups
-        if low_quality_data.var() == 0 or high_quality_data.var() == 0:
-            # Skip normality check if data has zero variance
-            print(f"Warning: {var} has zero variance in one or both groups. Skipping normality test.")
-            # Perform Mann-Whitney U test directly
-            u_statistic, p_value = stats.mannwhitneyu(low_quality_data, high_quality_data, alternative="two-sided")
-            t_statistic = u_statistic  # Use U-statistic in the result for consistency
-        else:
-            # Test for normality using Shapiro-Wilk test
-            low_quality_normal = stats.shapiro(low_quality_data)[1] > 0.05
-            high_quality_normal = stats.shapiro(high_quality_data)[1] > 0.05
-
-            # Perform t-test or Mann-Whitney U test based on normality
-            if low_quality_normal and high_quality_normal:
-                # Perform Welch's t-test (because it handles unequal variances)
-                t_statistic, p_value = stats.ttest_ind(low_quality_data, high_quality_data, equal_var=False)
-            else:
-                # Perform Mann-Whitney U test if data is not normal
-                u_statistic, p_value = stats.mannwhitneyu(low_quality_data, high_quality_data, alternative="two-sided")
-                t_statistic = u_statistic  # Use U-statistic in the result for consistency
-
-        ttest_results.append({"Variable": var, "P-Value": p_value, "T-Statistic": t_statistic})
-    
     # Convert results to DataFrame
     results_df = pd.DataFrame(ttest_results)
     
@@ -1558,72 +988,7 @@ def get_root_category(aoi):
     else:
         return None
 
-# #get attention swicthes for larger AOI (code <-> summary)
-# def getAttentionSwitchCategory():
-#     data = pd.read_csv('data.csv')
-#     count =0 
-#     # Initialize a dictionary to store attention switches for each method
-#     #attention_switches = {}
-#     corruptFiles = 0
-    
-#     # Iterate over each row in data.csv
-#     for index, row in data.iterrows():
-#         participant = row['Participant']
-#         method_name = remove_suffix(row['Method'])        
-#         gaze_directory = '/Users/--/Desktop/Research/YuLab/new_annotated_gaze'
-        
-#         files_in_directory = os.listdir(gaze_directory)
-#         categories = {'function declaration', 'parameter', 'exception handling','variable_declaration','loop', 'variable',
-#                       'conditional statement', 'external class','function call', 'argument', 'return','conditional block',
-#                         'comment', 'operator', 'externally defined variable or function', 'literal', 'assignment', 'operation'}
-        
-#         # Iterate over the files to find the gaze file for the current participant and method
-#         for file_name in files_in_directory:
-#             #print(file_name)
-#             if file_name ==  str(participant):
-                
-#                 #open file name directory and find file = str(participant) + '_gaze_writing_' + method_name + '.csv'
-#                 participant_directory = os.path.join(gaze_directory, file_name)
-#                 #print(participant_directory)
-#                 #check if the participant directory exists
-#                 if os.path.isdir(participant_directory):
-                        
-#                         # Construct the file name for the gaze file
-#                         gaze_file_name = 'annotated_gaze/' + str(participant) + '_gaze_writing_' + method_name + '.csv'
-                       
-#                         # Construct the full path to the gaze file
-#                         gaze_file_path = os.path.join(participant_directory, gaze_file_name)
-                        
-#                         # Check if the gaze file exists
-#                         if os.path.isfile(gaze_file_path):
-                            
-#                             # Open the gaze file
-#                             try: 
-#                                 gaze_data = pd.read_csv(gaze_file_path, on_bad_lines='skip')
-#                                 count+=1
-#                                 #gaze_data = gaze_data.iloc[:, 16:-2]                                
-#                                 # Select only the columns corresponding to categories
-#                                 category_columns = [col for col in gaze_data.columns if any(col.startswith(cat) for cat in categories)]
-#                                 #print(category_columns)
-#                                 # Calculate and assign attention switches for each category
-#                                 for column_name in category_columns:
-#                                     if column_name in gaze_data.columns:
-#                                         category_switches = calculate_switches_row(gaze_data, column_name)
-#                                         data.at[index, 'AttentionSwitch_' + column_name] = category_switches
-#                                     else:
-#                                         print(f"Column '{column_name}' not found in gaze_data")
-#                                 #data.at[index, 'AttentionSwitch_Token'] = token_switches
-                                
 
-#                             except Exception as e:
-#                                 print(f"Error processing file '{gaze_file_path}': {e}")
-#                                 #print(participant, method_name)
-#                                 corruptFiles+=1                                                                
-#                                 #print(f"Error processing file '{gaze_file_path}' after initial exception: {e}")
-    
-                                
-                                
-   
 #     data.to_csv('attentionSwitchesCategoryRevised.csv', index=False)  
 #     print(corruptFiles )
 def calculate_switches_row(currentFile):
@@ -1685,7 +1050,7 @@ def getAttentionSwitchCategory():
     for index, row in data.iterrows():
         participant = row['Participant']
         method_name = remove_suffix(row['Method'])        
-        gaze_directory = '/Users/--/Desktop/Research/YuLab/new_annotated_gaze'
+        gaze_directory = '/Users/--/Desktop/Research/Lab/new_annotated_gaze'
         
         files_in_directory = os.listdir(gaze_directory)
         
@@ -1784,7 +1149,7 @@ def mapGazeDatatoCategory():
         #print(participant, method_name)
         # Open annotated_gaze file
         # Path to the directory containing gaze files
-        gaze_directory = '/Users/--/Desktop/Research/YuLab/annotated_gaze_data'
+        gaze_directory = '/Users/--/Desktop/Research/Lab/annotated_gaze_data'
         
         #new_annotated_gaze_directory = '/Users/--/Desktop/new_annotated_gaze'
     
@@ -1859,100 +1224,7 @@ def mapGazeDatatoCategory():
                                 #token_switches = calculate_switches(gaze_data, 'Tokens')
                                 
     print(methodFound)                            
-    #print(corruptFiles )
-def pairedttestAttention(file, aoiType):
-    df = pd.read_csv(file)
-    
-    # Get unique method names
-    method_names = df['Method'].unique()
-    print(len(method_names))
-    
-    count = 0
-    count2= 0
-    # Iterate over each method name
-    for method in method_names:
-        # Calculate fixation count for the two qualities
-       # Select columns that are not null for the method
-        
-        method_data = df[(df['Method'] == method) & (df[aoiType].notnull())]
-        #print(method_data)
-        if aoiType not in method_data.columns:
-            #print(f"Column '{aoiType}' not found for method '{method}'")
-            count2+=1
-            continue
-        low_quality_count = len(method_data[method_data['Quality'] == 1])
-        high_quality_count = len(method_data[method_data['Quality'] == 0])
-        
-        # Calculate fixation count for the two qualities
-        low_quality = method_data[method_data['Quality'] == 0][aoiType]
-        
-        high_quality = method_data[method_data['Quality'] == 1][aoiType]
-        
-        #print(low_quality, high_quality)
-        #print(low_quality.std(), high_quality.std())
-        # Check if there is sufficient data for both qualities
-        if low_quality_count > 1 and high_quality_count > 1:
-            
-            if low_quality.std() != 0 and high_quality.std() != 0:
-                count2+=1
-                t_stat, p_value = stats.ttest_ind(low_quality, high_quality, equal_var=False)
-                if t_stat and p_value != 'nan':
-                    print(f"Paired t-test results for method {method}:")
-                    print("t-statistic:", t_stat)
-                    print("p-value:", p_value)
-                    print(f"Low Quality Points: {low_quality_count}, High Quality Points: {high_quality_count}")
-                    count+=1
-            else:
-                print(f"Standard deviation is zero for method {method}. Cannot perform t-test.")
-                print()
-                
-        else:
-            #print(f"Insufficient data for method {method}. Low Quality Points: {low_quality_count}, High Quality Points: {high_quality_count}")
-            print()
-            
-    print(count)
 
-def pairedttest(file):
-    # Read the DataFrame from the file
-    df = pd.read_csv(file)
-    
-    # Get unique method names
-    method_names = df['Method'].unique()
-    print(len(method_names))
-    
-    count = 0
-    # Iterate over each method name
-    for method in method_names:
-        # Calculate fixation count for the two qualities
-       # Select columns that are not null for the method
-        method_data = df[df['Method'] == method].dropna(axis=1)
-        low_quality_count = len(method_data[method_data['Quality'] == 1])
-        high_quality_count = len(method_data[method_data['Quality'] == 0])
-        
-        # Calculate fixation count for the two qualities
-        low_quality = method_data[method_data['Quality'] == 0].drop(columns=['Participant', 'Quality', 'Method']).mean()
-        
-        high_quality = method_data[method_data['Quality'] == 1].drop(columns=['Participant', 'Quality', 'Method']).mean()
-        
-        
-        # Check if there is sufficient data for both qualities
-        if low_quality_count > 1 and high_quality_count > 1:
-            if low_quality.std() != 0 and high_quality.std() != 0:
-                t_stat, p_value = stats.ttest_ind(low_quality, high_quality, equal_var=False)
-                print(f"Paired t-test results for method {method}:")
-                print("t-statistic:", t_stat)
-                print("p-value:", p_value)
-                print(f"Low Quality Points: {low_quality_count}, High Quality Points: {high_quality_count}")
-                count+=1
-            else:
-                print(f"Standard deviation is zero for method {method}. Cannot perform t-test.")
-                print()
-                
-        else:
-            #print(f"Insufficient data for method {method}. Low Quality Points: {low_quality_count}, High Quality Points: {high_quality_count}")
-            print()
-            
-    print(count)
 
 def t_test(mean1, mean2):
     print("mean1: ",mean1)
@@ -2025,7 +1297,7 @@ def getAttentionSwitch():
         #print(participant, method_name)
         # Open annotated_gaze file
         # Path to the directory containing gaze files
-        gaze_directory = '/Users/--/Desktop/Research/YuLab/annotated_gaze_data'
+        gaze_directory = '/Users/--/Desktop/Research/Lab/annotated_gaze_data'
         
         # Check if the directory exists
         
@@ -2380,7 +1652,7 @@ def run_statistical_tests(file_path, metric_name):
         print("Variances are not equal between the two groups.")
     
     # Step 5: Mann-Whitney U test (non-parametric test for comparing the two groups)
-    mann_whitney_test = mannwhitneyu(low_quality_group, high_quality_group, alternative='two-sided')
+    mann_whitney_test = mannwhitne(low_quality_group, high_quality_group, alternative='two-sided')
     print(f"Mann-Whitney U test: Statistic = {mann_whitney_test.statistic}, p-value = {mann_whitney_test.pvalue}")
 
     # Determine significance based on p-values
@@ -2412,60 +1684,6 @@ def participantMethods(method_list):
     print(participant_count)
 
 
-def count_methods(participant, method_list):
-    # Remove suffixes from participant methods
-    participant_methods = [remove_suffix(method) for method in participant]
-    # Count the number of methods from the method list
-    return sum(1 for method in participant_methods if method in method_list)
-
-def participant_methods_count(method_list):
-    # Remove suffixes from method_list
-    method_list = [remove_suffix(method) for method in method_list]
-
-    df = pd.read_csv('data.csv')
-    grouped = df.groupby('Participant')['Method'].apply(list)
-    method_counts = {}
-    for participant, pmethods in grouped.items():
-        method_counts[participant] = count_methods(pmethods, method_list)
-    #print(method_counts) 
-
-#top fixated categories per method in highQuality
-        
-def highQualityStrategyTopCategories():
-    #open fixationDuration: 
-    #quality = 1
-    #by method: return top categories
-    fixation_data = pd.read_csv('FixationDuration.csv')
-
-# Filter the data for quality == 1
-    quality_1_data = fixation_data[fixation_data['Quality'] == 1]
-
-# Group by Java method name
-    grouped_data = quality_1_data.groupby('Method')
-
-# Initialize a dictionary to store semantic categories and their durations for each method
-    method_semantic_categories = {}
-
-# Iterate over each method group
-    for method, group in grouped_data:
-    # Calculate total duration for each semantic category
-        semantic_category_duration = group.drop(columns=['Participant', 'Quality', 'Method']).sum()
-    # Sort by duration in descending order
-        semantic_category_duration = semantic_category_duration.sort_values(ascending=False)
-    # Store semantic categories and durations for the method
-        method_semantic_categories[method] = semantic_category_duration
-
-# Print the semantic categories by order (highest to least) for each method
-    for method, categories in method_semantic_categories.items():
-        
-        print(f"Method: {method}")
-        for category, duration in categories.items():
-            if duration > 0:
-                print(f"Semantic Category: {category}, Duration: {duration}")
-    print()
-        
-
-    
 def maxCategories(parentdir):
      #open files 
      #count number of methods containing exactly x amount of methods
@@ -2489,162 +1707,6 @@ def maxCategories(parentdir):
     return (methodList)
     
 
-def count_word_occurrences(csv_file):
-    word_counts = defaultdict(int)
-
-    with open(csv_file, 'r', newline='', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            for cell in row:
-                # Split words by commas
-                words = cell.split(',')
-                for word in words:
-                    # Strip leading and trailing spaces from each word
-                    word = word.strip()
-                    if word:  # Check if word is not empty after stripping spaces
-                        word_counts[word] += 1
-
-    return word_counts
-
-def findLostMethods(parentdir):
-    
-    lowqcategories = []
-    methodNames = []
-    df = pd.read_csv("FixationDuration.csv")
-    data = df[['Participant','Method', 'Quality']]
-    originalData = pd.read_csv("data.csv")
-    data2 = originalData[['Participant','Method', 'Quality']]
-    
-    unique_indices = []
-
-    for index, row in originalData.iterrows():
-        found = False
-    # Iterate through each row in df
-        for index_df, row_df in df.iterrows():
-        # Check if the 'Participant' and 'Method' values match
-            if (row['Participant'] == row_df['Participant']) and (remove_suffix(row['Method']) == remove_suffix(row_df['Method'])):
-                found = True
-                break
-    # If the row is not found in df, add its index to the list
-        if not found:
-            unique_indices.append(index)
-
-    # Select the unique rows from originalData based on the indices
-    unique_rows = originalData.loc[unique_indices]
-
-    # Display the unique rows
-    print((unique_rows))
-
-    count = 0
-    for index, row in data.iterrows():
-        methodname = row['Method'].split('_', 1)[0]
-        participant = row['Participant']
-        if row['Quality'] == 0:
-                    count+=1
-                    #add participant and method to df 
-                    lowqcategories.append({'Participant': participant, 'Method': methodname})
-    print(count) 
-    count = 0
-    #check data file and compare to fixationDuration Loss
-    
-    #loop through lowcategories and find method that is not in file
-    for file in os.listdir(parentdir):
-            filename = file.replace(".csv", "")
-            with open(os.path.join(parentdir, file), 'r') as f:
-                for entry in lowqcategories:
-                    if(entry['Method'] == filename):
-                        #print(entry['Method'])
-                             #remove lowq
-                        count+=1
-                        lowqcategories.remove(entry)          
-    print(len(lowqcategories))
-
-
-#function to open each file in directory and fetch all column names
-#strategies of high quality column
-def getColumnsinDirectory(parentdir):
-    lowqcategories = []
-    highqcategories = []
-    
-    #df = pd.read_csv("data.csv")
-    data = pd.read_csv("highQualityRatings.csv")
-    #df2 = pd.read_csv("lowQualityRatings.csv")
-    
-    
-    #high_quality_methods = df['method']
-    #low_quality_methods = df2['method']
-
-    
-        
-    count = 0;
-    for index, row in data.iterrows(): 
-        
-    #for method in dataset:
-        
-        methodname = row['method'].split('_', 1)[0]
-        count+=1
-        #if row['Quality'] == 1:
-        for file in os.listdir(parentdir):
-                filename = file.replace(".csv", "")
-                with open(parentdir + '/' + file, 'r') as f:
-            #get only columns
-                    for row in f: 
-                        #if row != ' " ':
-                            if filename == methodname:
-                                #print(methodname)
-                                #print(filename)
-                                
-                    #print(filename)
-                                highqcategories.append(row)
-                    #print(row)
-                                break;
-    print(count)                   
-    print(len(highqcategories))
-    #return (lowqcategories)
-                            
-    #fields = ["participant", "method", "ratings"]
-    with open('categorieshighquality.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-    # Write header
-       
-    # Iterate through highQdict
-        for element in highqcategories:
-            #print(element)
-                # Write data row
-            writer.writerow([element])
-    #return lowqcategories
-
-def findCommonCategories(categoriesList):
-     #list all categories  
-    writing_vectorizer = TfidfVectorizer(sublinear_tf=True)
-    X = writing_vectorizer.fit_transform(categoriesList)
-    writing_features = writing_vectorizer.get_feature_names_out()
-    
-    dfw = pd.DataFrame(X.toarray(), columns=writing_features)
-    plt.figure(figsize=(10, 16))
-    sns.heatmap(dfw, xticklabels=True, yticklabels=True, cmap='viridis')
-    plt.title("Writing Functions: TF/IDF Weights for Abstract Tokens")
-    plt.show
-    #plt.savefig('tfid.png')
-    #print()
-
-
-#reads file and returns list with methodname and corresponding survey ratings
-def ratingsprocessing(filedir, list):
-    with open(filedir,"rb") as file:
-        ratings = pickle.load(file)
-
-
-    for line in ratings.values(): 
-    #for line in ratings.keys(): 
-            if line and len(line) == 1:
-                #print(len(line))
-                list.append(line)
-            elif line and len(line) > 1: 
-                for i in line: 
-                    list.append(line)          
-    #print(len(list))
-    return list
 
 def basicStatsAttention(aoiType):
     #open file
@@ -2683,7 +1745,7 @@ def basicStatsAttention(aoiType):
     levene_stat, levene_p = stats.levene(lq_data, hq_data)
     print(f"\nLevene's Test for Equal Variance: Stat={levene_stat}, P-value={levene_p}")
 
-    u_statistic, p_value_mannwhitney = stats.mannwhitneyu(lq_data, hq_data, alternative='two-sided')
+    u_statistic, p_value_mannwhitney = stats.mannwhitne(lq_data, hq_data, alternative='two-sided')
     print(f"Mann-Whitney U Test: U-statistic={u_statistic}, P-value={p_value_mannwhitney}")
 
     t_statistic, p_value = stats.ttest_ind_from_stats(lq_mean_largeAOI, lq_std_largeAOI, 202, hq_mean_largeAOI, hq_std_largeAOI, 227)
@@ -2722,7 +1784,7 @@ def calculate_metric(data, parentdir, metric):
     print(f"Valid rows count: {len(valid_rows)}")
     return data
 
-from scipy.stats import levene, shapiro, mannwhitneyu, ttest_ind
+from scipy.stats import levene, shapiro, mannwhitne, ttest_ind
 
 def basicStatsRevised(final_data_file, parentdir, metric):
     # Load the final data file
@@ -2778,21 +1840,11 @@ def basicStatsRevised(final_data_file, parentdir, metric):
     print(final_data[final_data['Quality'] == 0][metric].describe())
     print(final_data[final_data['Quality'] == 1][metric].describe())
 
-    # import matplotlib.pyplot as plt
-    # import seaborn as sns
-    # plt.figure(figsize=(10, 6))
-    # sns.histplot(final_data[final_data['Quality'] == 0][metric], kde=True, label='Low Quality', color='blue')
-    # sns.histplot(final_data[final_data['Quality'] == 1][metric], kde=True, label='High Quality', color='red')
-    # plt.legend()
-    # plt.title(f"Distribution of {metric} for Low and High Quality")
-    # plt.xlabel(metric)
-    # plt.ylabel('Frequency')
-    # plt.show()
 
     # Perform T-Test or Mann-Whitney U Test based on normality and variance assumptions
     if p < 0.05:  # If not normal
         # For simplicity, perform Mann-Whitney U Test
-        mw_stat, mw_p = mannwhitneyu(valid_data, valid_data, alternative='two-sided')  # This is just an example; you may compare two different groups if needed
+        mw_stat, mw_p = mannwhitne(valid_data, valid_data, alternative='two-sided')  # This is just an example; you may compare two different groups if needed
         print(f"Mann-Whitney U Test: Stat={mw_stat}, P-value={mw_p}")
         test_type = "Mann-Whitney U Test"
         return {
@@ -2817,286 +1869,6 @@ def basicStatsRevised(final_data_file, parentdir, metric):
             "test_type": test_type
         }
     
-    
-
-
-#basic stats by quality of summary
-#mean and std of fixation count/duration 
-def basicStats(summary, parentdir, metric): 
-    #open quality file 
-    
-    data = pd.read_csv(summary)
-    data[metric] = None
-    #df = pd.read_csv("highQualityRatings.csv")
-    #df2 = pd.read_csv("lowQualityRatings.csv")
-    #data['avgFixationcount'] = 0
-    for index, row in data.iterrows():
-        methodname = row['method'].split('_', 1)[0]
-        participant = row['participant']
-        
-        # Initialize a count variable to keep track of the number of categories
-        categories = 0
-        
-        # Iterate through files in the parent directory
-        for file in os.listdir(parentdir):
-            filename = file.replace(".csv", "")
-            
-            # Check if the filename matches the method name and participant ID matches
-            if filename == methodname:
-                with open(os.path.join(parentdir, file), 'r') as f:
-                    # Read each line in the file
-                    for line in f:
-                        # Extract participant ID from the line
-                        pid = line.split(',')[0]
-                       
-                        
-                        # Check if the participant ID matches
-                        if str(participant) == pid:
-                            # Calculate the average count of categories: change to float for duration & int for fixation count
-                            
-                            
-                            categories = [int(x) for x in line.split(',')[1:]]
-                            # categories = [float(x) for x in line.split(',')[1:]]
-                            #print(categories)
-                            avg_count = sum(categories) / len(categories)
-                            
-                            # Append the average count to the row
-                            data.loc[index, metric] = avg_count
-                            data.at[index, metric] = avg_count
-                            # Break out of the inner loop once the participant ID is found
-    #print(data)   
-
-    # Calculate mean and standard deviation of 'avg_category_count' column
-    mean_avg_category_count = data[metric].mean()
-    std_avg_category_count = data[metric].std()
-
-    print("Mean:", mean_avg_category_count)
-    print("Standard deviation:", std_avg_category_count) 
-
-    # Normality checks
-    
-    
-    # Shapiro-Wilk test
-   
-    return mean_avg_category_count,std_avg_category_count
-    #runStats: 
-                                  
-                   
-#iterate through ratings and group low quality summaries & high quality summaries 
-#reads file and returns list with methodname and corresponding survey ratings
-def filterSummaryRating(filedir):
-    with open(filedir,"rb") as file:
-        ratings = pickle.load(file)
-
-    fields = ["participant", "method", "ratings", "ratingSum"]
-    #print(ratings.keys())
-    totalSum = []
-
-    highQdict = {"pid": {
-        "method" : []
-        
-    }}
-    neutralQdict = {"pid": {
-        "method" : []
-    }}
-
-    lowQdict = {"pid": {
-        "method" : []
-    }}
-    
-
-    for participant,dictionary in ratings.items():
-        for key,value in dictionary.items(): 
-                #append to column ratingSum: (int(value[0]) + int(value[3]) + (-1(int(value[1])+ int(value[2])) 
-                ratingSum = (int(value[0]) + int(value[3])) + (-1 * (int(value[1]) + int(value[2])))
-                #cluster analysis
-                if(ratingSum <= 10 and ratingSum >= -10):
-                    totalSum.append(ratingSum)
-                else:
-                    print(key, value)
-                    
-                
-                
-                #if(int(value[0]) + int(value[3]) / 2 > 3.5) and (int(value[1]) + int(value[2]) / 2 < 3.5):
-                if(ratingSum >= 4):        
-                        if participant not in highQdict:
-                            highQdict[participant] = {}
-                        if key not in highQdict[participant]:
-                            highQdict[participant][key] = []
-                        highQdict[participant][key].append(value)
-
-                         # Append rating_sum to value
-                        highQdict[participant][key][-1].append(ratingSum)
-                #flip signs for low (LESS THAN....)
-                        #else = neutral
-                #elif (int(value[0]) + int(value[3]) / 2 <= 3.5) and (int(value[1]) + int(value[2]) / 2 >= 3.5):
-                elif(ratingSum >= 1 and ratingSum < 4):    
-                        if participant not in neutralQdict:
-                            neutralQdict[participant] = {}
-                        if key not in neutralQdict[participant]:
-                            neutralQdict[participant][key] = []
-                        neutralQdict[participant][key].append(value)
-                        neutralQdict[participant][key][-1].append(ratingSum)
-                elif ratingSum < 1: #ratingSum <= -4.5
-                    if participant not in lowQdict:# or participant not in neutralQdict:
-                            lowQdict[participant] = {}
-                    if key not in lowQdict[participant]:
-                        lowQdict[participant][key] = []
-                    lowQdict[participant][key].append(value)
-                    lowQdict[participant][key][-1].append(ratingSum)
-                     
-    #with open('highQualityRatings.pkl', 'wb') as output:
-        #pickle.dump(highQdict, output)
-#     total_sum_reshaped = np.array(totalSum).reshape(-1, 1)
-
-#     kmeans = KMeans(n_clusters=3 )  # Adjust the number of clusters as needed
-
-#     # Fit KMeans to your data
-#     kmeans.fit(total_sum_reshaped)
-
-#     # Get cluster labels for each data point
-#     cluster_labels = kmeans.labels_
-
-#     # Print cluster labels
-#     unique_labels, label_counts = np.unique(cluster_labels, return_counts=True)
-
-# # Print the counts
-#     for label, count in zip(unique_labels, label_counts):
-#         print(f"Cluster {label}: {count} occurrences")
-
-#     centroids = kmeans.cluster_centers_
-
-# Print the centroids
-    # for i, centroid in enumerate(centroids):
-    #     print(f"Cluster {i} centroid: {centroid[0]}")
-    
-    print(f"Length of High Quality {len(highQdict)}")
-    print(f"Length of Low Quality {len(lowQdict)}")
-    print(f"Length of Neutral Quality {len(neutralQdict)}")
-    ratingSum_counts = {}
-
-# Count occurrences of each ratingSum
-    
-    for sum in totalSum:
-        if sum in ratingSum_counts:
-            ratingSum_counts[sum] += 1
-        else:
-            ratingSum_counts[sum] = 1
-
-# Print the counts
-    for ratingSum, count in ratingSum_counts.items():
-        print(f"RatingSum {ratingSum}: {count} occurrences")
-
-    with open('highQualityRatingsNew.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-    # Write header
-        writer.writerow(fields)
-    # Iterate through highQdict
-        for participant, data in highQdict.items():
-            for key, values in data.items():
-                for value in values:
-                # Write data row
-                    writer.writerow([participant, key, value])
-    #with open('highQualityRatings.csv', 'w', newline='') as f:
-        #writer = csv.writer(f)
-        #for participant, data in highQdict.items():
-            #for key, values in data.items():
-                #for value in values:
-                    #writer.writerow([participant, key, *value])
-
-    with open('neutralQualityRatingsNew.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-    # Write header
-        writer.writerow(fields)
-    # Iterate through highQdict
-        for participant, data in neutralQdict.items():
-            for key, values in data.items():
-                for value in values:
-                # Write data row
-                    writer.writerow([participant, key, value])
-    
-    #with open('lowQualityRatings1.pkl', 'wb') as output:
-        #pickle.dump(lowQdict, output) 
-
-    # Write low quality ratings to CSV
-    with open('lowQualityRatingsNew.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-    # Write header
-        writer.writerow(fields)
-    # Iterate through highQdict
-        for participant, data in lowQdict.items():
-            for key, values in data.items():
-                for value in values:
-                # Write data row
-                    writer.writerow([participant, key, value])
-             
-                    #print(lowQdict.values())
-                
-                    #append participant id, method & list to highq summary
-                    #print(ratingsList)
-
-
-                #store high quality summaries in highqdictionary 
-                 
-
-                #print(type(participant)) #str
-                #print(type(methods)) #dict: str, array
-                #for i in methods: 
-                    #print(i)
-                    #print(type(i)) 
-        
-    #for line in ratings.keys(): 
-                #list.append(line)
-
-
-
-def abstractScanPathProcessing():
-
-    df = pd.read_csv("highQualityRatings.csv")
-    df2 = pd.read_csv("lowQualityRatings.csv")
-
-    print(df2['participant'])
-    # Initialize the dictionary to store data
-    dataCount = {
-        "Participant": [],
-        "Quality": [],
-        "Method": []
-    }
-    
-    # Iterate through the rows of the dataframe
-    for row in df.iterrows():
-        participant = row[1]['participant']
-        method = row[1]['method']
-        
-        # Append the extracted data to the new dataframe with quality assigned to 0
-        
-        dataCount["Participant"].append(participant)
-        dataCount["Quality"].append(0)
-        dataCount["Method"].append(method)
-
-    for row in df2.iterrows():
-        participant = row[1]['participant']
-        method = row[1]['method']
-        
-        # Append the extracted data to the new dataframe with quality assigned to 0
-       
-        dataCount["Participant"].append(participant)
-        dataCount["Quality"].append(1)
-        dataCount["Method"].append(method)
-    
-    
-    # Convert the dictionary to a dataframe
-    result_df = pd.DataFrame(dataCount)
-    
-    # Display the resulting dataframe
-    print(result_df)
-
-    result_df.to_csv('data.csv', index=False)
-
-
-import os
-import pandas as pd
-
 def check_participant_method_in_files(exclude_file, parentdir):
     exclude_data = pd.read_csv(exclude_file)
     missing = []
@@ -3148,190 +1920,84 @@ if __name__ == '__main__':
      
     methodList = []
     
-    #*** 
-    #revisedList = ratingsprocessing("Revised_Ratings.pkl", revisedList)
-
-    #1. Classifies low v. neutral v. high quality
-    #filterSummaryRating("Revised_Ratings.pkl")
-
-    #2. Combine low/high summmaries into single data set with quality column
-    #abstractScanPathProcessing()
-
-    #3 Fetches fixation count and duration per summary & creates files: FixationCount/FixationDuration
-    #getCategoriesMetrics(maxCategories('/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing'),'/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing')
-    # aggregate_fixation_data('/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing','fixationduration_tokens.csv')
-#     aggregate_fixation_data_with_quality(
-#     '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing', 
-#     'data.csv', 
-#     'fixationduration_tokens.csv'
-# )
-#     aggregate_fixation_data_with_quality(
-#     '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_counts_writing', 
-#     'data.csv', 
-#     'fixationcount_tokens.csv'
-# )
+    # 3 Fetches fixation count and duration per summary & creates files: FixationCount/FixationDuration
+    getCategoriesMetrics(maxCategories('/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing'),'/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing')
+    aggregate_fixation_data('/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing','fixationduration_tokens.csv')
+    aggregate_fixation_data_with_quality(
+    '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing', 
+    'data.csv', 
+    'fixationduration_tokens.csv'
+    )   
+    aggregate_fixation_data_with_quality(
+    '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_counts_writing', 
+    'data.csv', 
+    'fixationcount_tokens.csv'
+    )
     
-    # run_statistical_tests('fixationcount_tokens.csv', 'Fixation_Duration')
-    # run_statistical_tests('fixationduration_tokens.csv', 'Fixation_Duration')
+    run_statistical_tests('fixationcount_tokens.csv', 'Fixation_Duration')
+    run_statistical_tests('fixationduration_tokens.csv', 'Fixation_Duration')
 
-    #4. peforms basic stats report (mean, std) for count/duration 
+    # 4. peforms basic stats report (mean, std) for count/duration 
     # currently low: 202 and high: 227 = 429 
-    # model current: 
-    # /Users/--/Desktop/midprep/abstract_fixaction_counts_writing
-    # basicStats('lowQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
-    # basicStats('lowQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
     
-    # basicStats('highQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
-    # basicStats('highQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
+    basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
+    basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCounts')
+
+    basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
+
+    basicStatsRevised('lowQualityRatings.csv','/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing', 'avgFixationDuration')
+    basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing', 'avgFixationDuration')
+
     
-    # #4.2 Manual T-test
-    # mean1, std1 = basicStats('lowQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing', 'avgFixationCount')
-    # mean2, std2 = basicStats('highQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing', 'avgFixationCount')
-    # n1 = 202  # Assuming the sample size of low quality
-    # n2 = 227  # Assuming the sample size is high quallity
 
-    # # Perform the independent t-test
-    # t_statistic, p_value = stats.ttest_ind_from_stats(mean1, std1, n1, mean2, std2, n2)
-    # print("T-statistic:", t_statistic)
-    # print("P-value:", p_value)
+    # 6. fethes attention switch of large AOI (summary v. code) & creates file attentionSwitch
+    getAttentionSwitch()
 
-    # basicStatsRevised('lowQualityRatings.csv', 'highQualityRatings.csv', '/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
-    # basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
-    # basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCounts')
+    # 7. basic stats of attention switch -> avg/std of large aoi & small aoi
+    basicStatsAttention('AttentionSwitch_Token')
+    basicStatsAttention('AttentionSwitch_CodetoSummary')
 
-    # basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
+    # 9 attention switch for categories 
+    readCategoryMap()
+    mapGazeDatatoCategory()
+    getAttentionSwitchCategory()
+    aggregate_attention_switches('attentionSwitchesCategoryRevised.csv')
+    perform_manova('attentionSwitchesCategoryRevised.csv')
+    post_hoc_ttest('attentionSwitchesCategoryRevised.csv')
 
-    # basicStatsRevised('lowQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
-    # basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/Research/YuLab/abstract_fixation_duration_writing', 'avgFixationDuration')
-
-    #5. performs t-test by method group for count/duration
-    #pairedttest('FixationCount.csv')
-    #pairedttest('FixationDuration.csv')
-
-    #6. fethes attention switch of large AOI (summary v. code) & creates file attentionSwitch
-    #getAttentionSwitch()
-
-    #7. basic stats of attention switch -> avg/std of large aoi & small aoi
-    # basicStatsAttention('AttentionSwitch_Token')
-    # basicStatsAttention('AttentionSwitch_CodetoSummary')
-    #8. paired t -test of attention swithc by method (large aoi * small aoi)
-    #print(pd.read_csv('attentionSwitches.csv'))
-    #pairedttestAttention('attentionSwitches.csv','AttentionSwitch_CodetoSummary')
-    #pairedttestAttention('attentionSwitches.csv','AttentionSwitch_Token')
-    #---
-    #9 attention switch for categories 
-    #readCategoryMap()
-    #mapGazeDatatoCategory()
-    # getAttentionSwitchCategory()
-    # aggregate_attention_switches('attentionSwitchesCategoryRevised.csv')
-    # perform_manova('attentionSwitchesCategoryRevised.csv')
-    # post_hoc_ttest('attentionSwitchesCategoryRevised.csv')
-    #t_test_category('attentionSwitchesCategory.csv')
-    #t_test_category_update('attentionSwitchesCategory.csv')
+    t_test_category_update('attentionSwitchesCategory.csv')
 
     # 10. Correlation between expertise and quality summary 
-    # assign_expertise("NStudy.csv", "Task_Data_V.csv")
-    # participants_distribution()
-    # compare_and_correlate_experience()
-    #plot_histograms()
-    # test_normality_shapiro()
-    #run_correlation_update()
+    assign_expertise("NStudy.csv", "Task_Data_V.csv")
+    participants_distribution()
+    compare_and_correlate_experience()
+
+    test_normality_shapiro()
+    run_correlation_update()
 
     # PREDICTIVE MODEL: 
-    #11. Assign scan path to participant
-    #scanpath_processing()
-    #preprocess_scanpath() #helper function for individual gaze_data files
-    #12. Map features: fixation duration, fixation count, attention switches to scan path
-    #(315, fetchString, 0): {(function declaration: 15.2, 10, 4), ... 
-    # Map tokens in fixationCount/fixationDuration to abstract counterparts 
-    #map_fixations_tokens_to_category('/Users/--/Desktop/Research/YuLab/FixationDurationTokens')
+    # 11. Assign scan path to participant
+    scanpath_processing()
+    preprocess_scanpath() #helper function for individual gaze_data files
+    # 12. Map features: fixation duration, fixation count, attention switches to scan path
     # Map attention switches for semantic categories without grouping categories
-    #map_attentionswitches()
-    # Map fixation count to scan path categories: 
-    #map_fixations('/Users/--/Desktop/Research/YuLab/FixationDurationTokenAbstractNonaggregate')
-    # Re-map attention switches 
-    # Map features to scan path sequence
+    map_attentionswitches()
 
-    # Additional analysis for significant results: attention switch by tokens -> do attention switches mean shorter scanpaths? 
-    # ratioList = scanpath_ratio('/Users/--/Desktop/Research/YuLab/FixationCountToken')
-    #fixation_ratio_map(ratioList)
-    #compare_fixation_ratios('fixationRatio.csv')
-    # scanpath_length_difference('fixationRatio.csv')
-    # compare_fixation_ratios('fixationRatio.csv', 'Scanpath_Length')
-    # compare_fixation_ratios('fixationRatio.csv', 'Fixation_Ratio')
-    #13 Map raw method token: semantic category: fixation duration: 
+    # 13 Map raw method token: semantic category: fixation duration: 
     # Create method token non-aggregated scan path: 
-    #scanpath_processing()
-    #check to see if raw scanpath == to semantic category scanpath
-    #scanpathvalidation()
-    #map_columns_between_directories('/Users/--/Desktop/Research/YuLab/annotated_gaze_data','/Users/--/Desktop/new_annotated_gaze')
-    #model_token_map('final_mappings.pkl', 'scan_paths_nonaggregate_fixDuration_new.pkl')
+    scanpath_processing()
 
-    #first pass and regression path calculations
-    # run_t_tests_on_durations(calculate_durations('model_map.pkl'))
+    map_columns_to_new_directories('Data/raw_data/annotated_gaze','Data/raw_data/new_annotated_gaze')
+    model_token_map('final_mappings.pkl', 'scan_paths_nonaggregate_fixDuration_new.pkl')
 
-    #excluding data to make sure all stats match: get_null_entries_dynamic
-    # get_null_entries_dynamic('attentionSwitchesCategory.csv')
-    # check_files_in_directory('excludedParticipants.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing')
+
+    # excluding data to make sure all stats match: get_null_entries_dynamic
+    get_null_entries_dynamic('attentionSwitchesCategory.csv')
+    check_files_in_directory('excludedParticipants.csv', 'Data/raw_data/abstract_fixation_duration_writing')
     
-    # check_participant_method_in_files('midprep/neutralQualityRatings.csv', '/Users/suadhm/Desktop/Quality-Code-Summarization-Analysis/Data/abstract_fixaction_counts_writing')
-    #check distribution of low and high quality in data: 
-    # count_quality_per_participant('finalData.csv')
-    #-------------
+    check_participant_method_in_files('midprep/neutralQualityRatings.csv', 'Data/raw_data/abstract_fixation_duration_writing')
+    # check distribution of low and high quality in data: 
+    count_quality_per_participant('finalData.csv')
+    
 
-    #highQualityStrategyTopCategories()
-    #methodList = ratingsprocessing("filtered_rating_neg2.pkl", methodList)
-    #methodList = ratingsprocessing("filtered_rating_neg3.pkl", methodList)
-    #methodList = ratingsprocessing("highQualityRatings.pkl", methodList)
-
-    #participant_methods_count(maxCategories('/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing'))
-    #fetchEyeMetrics(maxCategories('/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing'))
-    #*** 
-    #revisedList = ratingsprocessing("Revised_Ratings.pkl", revisedList)
-
-    #1. Classifies low v. neutral v. high quality
-    filterSummaryRating("Data/Revised_Ratings.pkl")
-
-    #2. Combine low/high summmaries into single data set with quality column
-    #abstractScanPathProcessing()
-
-    #findLostMethods("/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing")
-    # Count the frequency of terms
-    #csv_file = 'categorieslowquality.csv'
-    #word_occurrences = count_word_occurrences(csv_file)
-
-    # Print the dictionary with word occurrences
-    #for word, count in word_occurrences.items():
-        #print(f"{word}: {count}")   
-
-    #getColumnsinDirectory('/Users/--/Desktop/Research/YuLab/abstract_fixation_count_writing')
-
-    #print(len(revisedList))
-    #print(revisedList)
-
-    #print(len(revisedList))
-
-    #with open("filtered_rating_neg2.pkl","rb") as file2:
-        #ratings2 = pickle.load(file2)
-
-    #with open("filtered_rating_neg3.pkl","rb") as file3:
-        #ratings3 = pickle.load(file3)
-
-    #with open("lowQualityRatings.pkl","rb") as file4:
-        #lowratings = pickle.load(file4)
-
-        #print(data)
-        #list of methods that had ratings in reading condition 
-        #methodList = []
-
-        #for participant, methods in lowratings.items():
-            #count = 0  # Reset count for each participant
-            #for method, values in methods.items():  # Iterate through methods
-                #count += len(values)  # Increment count by the number of values for the method
-            #print("", participant)
-            #print("", count)
-                
-        #print(ratings4.keys())
-
-        #print(len(methodList))
-        #number of unique methods: 29
+    
