@@ -4,22 +4,22 @@ import pandas as pd
 import os
 from collections import Counter
 from collections import defaultdict
-from scipy import stats
+# from scipy import stats
 import numpy as np
-from sklearn.cluster import KMeans
-from collections import Counter
-from scipy.stats import ttest_ind
-from scipy import stats
-from scipy.stats import shapiro, pearsonr, spearmanr
-from transformers import BertModel, BertTokenizer, BertForSequenceClassification
-from torch.utils.data import Dataset, DataLoader
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+# from sklearn.cluster import KMeans
+# from collections import Counter
+# from scipy.stats import ttest_ind
+# from scipy import stats
+# from scipy.stats import shapiro, pearsonr, spearmanr
+# from transformers import BertModel, BertTokenizer, BertForSequenceClassification
+# from torch.utils.data import Dataset, DataLoader
+# from sklearn.model_selection import train_test_split
+# from sklearn.preprocessing import LabelEncoder
 import re
-from statsmodels.multivariate.manova import MANOVA
-import statsmodels.api as sm
-from statsmodels.formula.api import ols
-from statsmodels.stats.multitest import multipletests
+# from statsmodels.multivariate.manova import MANOVA
+# import statsmodels.api as sm
+# from statsmodels.formula.api import ols
+# from statsmodels.stats.multitest import multipletests
 
 def count_quality_per_participant(file_path):
     """
@@ -626,7 +626,7 @@ def assign_expertise(file, file1):
     id_to_years = all_demo.set_index('ID')['Years Coding'].to_dict()
     id_to_java_years = all_demo.set_index('ID')['Java Experience'].to_dict()
     # Read the main data file
-    data = pd.read_csv('data.csv')
+    data = pd.read_csv('Data/preprocessing_data/attentionSwitchesCategoryAllParticipant.csv')
     
     
     # Map the 'Participant' column to the corresponding 'Years Coding' using the dictionary
@@ -634,7 +634,7 @@ def assign_expertise(file, file1):
     data['JavaExperience'] = data['Participant'].map(id_to_java_years)
 
     # Save the updated data back to 'data.csv' or return it if needed
-    data.to_csv('data.csv', index=False)
+    data.to_csv('Data/preprocessing_data/attentionSwitchesCategoryAllParticipant.csv', index=False)
     #print(len(all_demo))
 
 
@@ -1040,7 +1040,8 @@ def calculate_switches_row(currentFile):
 
 
 def getAttentionSwitchCategory():
-    data = pd.read_csv('data.csv')
+    #data = pd.read_csv('data.csv')
+    data = pd.read_csv('Data/preprocessing_data/fixation/FixationCount.csv')
     count =0 
     # Initialize a dictionary to store attention switches for each method
     #attention_switches = {}
@@ -1050,7 +1051,7 @@ def getAttentionSwitchCategory():
     for index, row in data.iterrows():
         participant = row['Participant']
         method_name = remove_suffix(row['Method'])        
-        gaze_directory = '/Users/--/Desktop/Research/Lab/new_annotated_gaze'
+        gaze_directory = 'Data/raw_data/new_annotated_gaze'
         
         files_in_directory = os.listdir(gaze_directory)
         
@@ -1114,7 +1115,7 @@ def getAttentionSwitchCategory():
                                 print(f"Error processing file '{gaze_file_path}': {e}")
                                 corruptFiles += 1
 
-    data.to_csv('attentionSwitchesCategoryRevised.csv', index=False)
+    data.to_csv('Data/preprocessing_data/attentionSwitchesCategoryAllParticipant.csv', index=False)
     print(f"Corrupt files: {corruptFiles}")
 
 def map_token_to_category(columnToken, categoryMap):
@@ -1285,7 +1286,11 @@ def calculate_switches(currentFile, aoiType):
     return switches
 #get attention swicthes for larger AOI (code <-> summary)
 def getAttentionSwitch():
-    data = pd.read_csv('data.csv')
+    #data = pd.read_csv('data.csv')
+    data = pd.read_csv(
+        'Data/preprocessing_data/fixation/FixationCount.csv',
+        usecols=['Participant', 'Quality','Method']  # restrict columns here
+    )
     
     # Initialize a dictionary to store attention switches for each method
     #attention_switches = {}
@@ -1297,9 +1302,7 @@ def getAttentionSwitch():
         #print(participant, method_name)
         # Open annotated_gaze file
         # Path to the directory containing gaze files
-        gaze_directory = '/Users/--/Desktop/Research/Lab/annotated_gaze_data'
-        
-        # Check if the directory exists
+        gaze_directory = 'Data/raw_data/new_annotated_gaze'
         
         # List all files in the directory
         files_in_directory = os.listdir(gaze_directory)
@@ -1323,6 +1326,7 @@ def getAttentionSwitch():
                             # Open the gaze file
                             try: 
                                 gaze_data = pd.read_csv(gaze_file_path, quoting=csv.QUOTE_NONE)
+                                print(gaze_file_name)
                                 
                                 codetosumm_switches = calculate_switches(gaze_data, 'codetosum')
                                 token_switches = calculate_switches(gaze_data, 'Tokens')
@@ -1371,7 +1375,9 @@ def getAttentionSwitch():
         #data.to_csv('attentionSwitch.csv', index=False)
     #with open("attention_switches1.pkl", "wb") as f:
         #pickle.dump(attention_switches, f)
-    data.to_csv('attentionSwitches.csv', index=False)  
+    #data.to_csv('attentionSwitches.csv', index=False)  
+    data.to_csv('Data/preprocessing_data/attentionSwitchesCategoryAllParticipant.csv', index=False)
+                                
     print(corruptFiles )                       
    
 
@@ -1784,7 +1790,7 @@ def calculate_metric(data, parentdir, metric):
     print(f"Valid rows count: {len(valid_rows)}")
     return data
 
-from scipy.stats import levene, shapiro, mannwhitne, ttest_ind
+#from scipy.stats import levene, shapiro, mannwhitne, ttest_ind
 
 def basicStatsRevised(final_data_file, parentdir, metric):
     # Load the final data file
@@ -1918,86 +1924,87 @@ def check_participant_method_in_files(exclude_file, parentdir):
 #method to find common categories
 if __name__ == '__main__':
      
-    methodList = []
+    # methodList = []
     
-    # 3 Fetches fixation count and duration per summary & creates files: FixationCount/FixationDuration
-    getCategoriesMetrics(maxCategories('/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing'),'/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing')
-    aggregate_fixation_data('/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing','fixationduration_tokens.csv')
-    aggregate_fixation_data_with_quality(
-    '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing', 
-    'data.csv', 
-    'fixationduration_tokens.csv'
-    )   
-    aggregate_fixation_data_with_quality(
-    '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_counts_writing', 
-    'data.csv', 
-    'fixationcount_tokens.csv'
-    )
+    # # 3 Fetches fixation count and duration per summary & creates files: FixationCount/FixationDuration
+    # getCategoriesMetrics(maxCategories('/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing'),'/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing')
+    # aggregate_fixation_data('/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing','fixationduration_tokens.csv')
+    # aggregate_fixation_data_with_quality(
+    # '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_duration_writing', 
+    # 'data.csv', 
+    # 'fixationduration_tokens.csv'
+    # )   
+    # aggregate_fixation_data_with_quality(
+    # '/Users/--/Desktop/Quality-Code-Summarization-Analysis/Data/fixation_counts_writing', 
+    # 'data.csv', 
+    # 'fixationcount_tokens.csv'
+    # )
     
-    run_statistical_tests('fixationcount_tokens.csv', 'Fixation_Duration')
-    run_statistical_tests('fixationduration_tokens.csv', 'Fixation_Duration')
+    # run_statistical_tests('fixationcount_tokens.csv', 'Fixation_Duration')
+    # run_statistical_tests('fixationduration_tokens.csv', 'Fixation_Duration')
 
-    # 4. peforms basic stats report (mean, std) for count/duration 
-    # currently low: 202 and high: 227 = 429 
+    # # 4. peforms basic stats report (mean, std) for count/duration 
+    # # currently low: 202 and high: 227 = 429 
     
-    basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
-    basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCounts')
+    # basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # basicStatsRevised('finalData.csv', '/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCounts')
 
-    basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
+    # basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/midprep/abstract_fixaction_counts_writing', 'avgFixationCount')
 
-    basicStatsRevised('lowQualityRatings.csv','/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing', 'avgFixationDuration')
-    basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # basicStatsRevised('lowQualityRatings.csv','/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing', 'avgFixationDuration')
+    # basicStatsRevised('highQualityRatings.csv','/Users/--/Desktop/Research/Lab/abstract_fixation_duration_writing', 'avgFixationDuration')
 
-    
-
-    # 6. fethes attention switch of large AOI (summary v. code) & creates file attentionSwitch
-    getAttentionSwitch()
-
-    # 7. basic stats of attention switch -> avg/std of large aoi & small aoi
-    basicStatsAttention('AttentionSwitch_Token')
-    basicStatsAttention('AttentionSwitch_CodetoSummary')
-
-    # 9 attention switch for categories 
-    readCategoryMap()
-    mapGazeDatatoCategory()
-    getAttentionSwitchCategory()
-    aggregate_attention_switches('attentionSwitchesCategoryRevised.csv')
-    perform_manova('attentionSwitchesCategoryRevised.csv')
-    post_hoc_ttest('attentionSwitchesCategoryRevised.csv')
-
-    t_test_category_update('attentionSwitchesCategory.csv')
-
-    # 10. Correlation between expertise and quality summary 
-    assign_expertise("NStudy.csv", "Task_Data_V.csv")
-    participants_distribution()
-    compare_and_correlate_experience()
-
-    test_normality_shapiro()
-    run_correlation_update()
-
-    # PREDICTIVE MODEL: 
-    # 11. Assign scan path to participant
-    scanpath_processing()
-    preprocess_scanpath() #helper function for individual gaze_data files
-    # 12. Map features: fixation duration, fixation count, attention switches to scan path
-    # Map attention switches for semantic categories without grouping categories
-    map_attentionswitches()
-
-    # 13 Map raw method token: semantic category: fixation duration: 
-    # Create method token non-aggregated scan path: 
-    scanpath_processing()
-
-    map_columns_to_new_directories('Data/raw_data/annotated_gaze','Data/raw_data/new_annotated_gaze')
-    model_token_map('final_mappings.pkl', 'scan_paths_nonaggregate_fixDuration_new.pkl')
-
-
-    # excluding data to make sure all stats match: get_null_entries_dynamic
-    get_null_entries_dynamic('attentionSwitchesCategory.csv')
-    check_files_in_directory('excludedParticipants.csv', 'Data/raw_data/abstract_fixation_duration_writing')
-    
-    check_participant_method_in_files('midprep/neutralQualityRatings.csv', 'Data/raw_data/abstract_fixation_duration_writing')
-    # check distribution of low and high quality in data: 
-    count_quality_per_participant('finalData.csv')
     
 
+    # # 6. fethes attention switch of large AOI (summary v. code) & creates file attentionSwitch
+    # getAttentionSwitch()
+
+    # # 7. basic stats of attention switch -> avg/std of large aoi & small aoi
+    # basicStatsAttention('AttentionSwitch_Token')
+    # basicStatsAttention('AttentionSwitch_CodetoSummary')
+
+    # # 9 attention switch for categories 
+    # readCategoryMap()
+    # mapGazeDatatoCategory()
+    # getAttentionSwitchCategory()
+    # aggregate_attention_switches('attentionSwitchesCategoryRevised.csv')
+    # perform_manova('attentionSwitchesCategoryRevised.csv')
+    # post_hoc_ttest('attentionSwitchesCategoryRevised.csv')
+
+    # t_test_category_update('attentionSwitchesCategory.csv')
+
+    # # 10. Correlation between expertise and quality summary 
+    # assign_expertise("NStudy.csv", "Task_Data_V.csv")
+    # participants_distribution()
+    # compare_and_correlate_experience()
+
+    # test_normality_shapiro()
+    # run_correlation_update()
+
+    # # PREDICTIVE MODEL: 
+    # # 11. Assign scan path to participant
+    # scanpath_processing()
+    # preprocess_scanpath() #helper function for individual gaze_data files
+    # # 12. Map features: fixation duration, fixation count, attention switches to scan path
+    # # Map attention switches for semantic categories without grouping categories
+    # map_attentionswitches()
+
+    # # 13 Map raw method token: semantic category: fixation duration: 
+    # # Create method token non-aggregated scan path: 
+    # scanpath_processing()
+
+    # map_columns_to_new_directories('Data/raw_data/annotated_gaze','Data/raw_data/new_annotated_gaze')
+    # model_token_map('final_mappings.pkl', 'scan_paths_nonaggregate_fixDuration_new.pkl')
+
+
+    # # excluding data to make sure all stats match: get_null_entries_dynamic
+    # get_null_entries_dynamic('attentionSwitchesCategory.csv')
+    # check_files_in_directory('excludedParticipants.csv', 'Data/raw_data/abstract_fixation_duration_writing')
     
+    # check_participant_method_in_files('midprep/neutralQualityRatings.csv', 'Data/raw_data/abstract_fixation_duration_writing')
+    # # check distribution of low and high quality in data: 
+    # count_quality_per_participant('finalData.csv')
+    
+
+    #getAttentionSwitch()
+    assign_expertise("Data/preprocessing_data/participantData/NStudy.csv", "Data/preprocessing_data/participantData/Task_Data_V.csv")

@@ -1,0 +1,26 @@
+{
+    "id": "AFD4EAF8",
+    "path": "~/Desktop/Data/LMER_Analysis/LMER_stats.R",
+    "project_path": "LMER_stats.R",
+    "type": "r_source",
+    "hash": "3075692077",
+    "contents": "",
+    "dirty": false,
+    "created": 1757101699407.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "100,73",
+        "scrollLine": "85"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1758924931,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1758924931439,
+    "read_only": false,
+    "read_only_alternatives": []
+}
